@@ -1,32 +1,116 @@
-export class NullType { kind = 'Null' as const }
-export class BooleanType { kind = 'Boolean' as const }
-export class NumberType { kind = 'Number' as const }
-export class StringType { kind = 'String' as const }
+import {
+  TSType
+} from '@babel/types';
 
-export class ObjectType {
-  kind = 'Object' as const;
-  constructor(public fields: { [name: string]: Type }) {}
+module Type {
+  export type Type =
+    Null |
+    Boolean |
+    Number |
+    String |
+    Object |
+    Function;
+
+  export type Null = {
+    type: 'Null';
+  }
+
+  export type Boolean = {
+    type: 'Boolean';
+  }
+
+  export type Number = {
+    type: 'Number';
+  }
+
+  export type String = {
+    type: 'String';
+  }
+
+  export type Object = {
+    type: 'Object';
+    properties: { [name: string]: Type };
+  }
+
+  export type Function = {
+    type: 'Function';
+    args: Type[];
+    ret: Type;
+  }
+
+  export const nullType: Null = { type: 'Null' };
+  export const boolean: Boolean = { type: 'Boolean' };
+  export const number: Number = { type: 'Number' };
+  export const string: String = { type: 'String' };
+
+  export function object(properties: { [name: string]: Type }): Object {
+    return { type: 'Object', properties }
+  }
+
+  export function functionType(args: Type[], ret: Type): Function {
+    return { type: 'Function', args, ret };
+  }
+
+  export function toString(type: Type): string {
+    switch (type.type) {
+      case 'Null':    return 'null';
+      case 'Boolean': return 'boolean';
+      case 'Number':  return 'number';
+      case 'String':  return 'string';
+
+      case 'Object': {
+        const props =
+          Object.entries(type.properties).map(([ name, type ]) => `${name}: ${toString(type)}`);
+        return `{ ${props.join(', ')} }`;
+      }
+
+      case 'Function': {
+        const args = type.args.map(toString);
+        return `(${args.join(', ')}) => ${type.ret}`
+      }
+    }
+  }
+
+  export function ofTSType(tsType: TSType): Type {
+    switch (tsType.type) {
+      case 'TSNullKeyword': return nullType;
+      case 'TSBooleanKeyword': return boolean;
+      case 'TSNumberKeyword': return number;
+      case 'TSStringKeyword': return string;
+
+      case 'TSTypeLiteral': {
+        const props =
+          tsType.members.reduce<{ [name: string]: Type }>(
+            (obj, mem) => {
+              if (mem.type !== 'TSPropertySignature') throw `unimplemented ${mem.type}`;
+              if (mem.key.type !== 'Identifier') throw `unimplemented ${mem.key.type}`;
+              if (!mem.typeAnnotation) throw `type required for ${mem.key.name}`;
+              const type = ofTSType(mem.typeAnnotation.typeAnnotation);
+              return Object.assign(obj, { [mem.key.name]: type });
+            },
+            { }
+          );
+        return Type.object(props);
+      }
+
+      case 'TSFunctionType': {
+        const args =
+          tsType.parameters.map(param => {
+            if (param.type !== 'Identifier') throw `unimplemented ${param.type}`;
+            if (!param.typeAnnotation) throw `type required for ${param.name}`;
+            if (param.typeAnnotation.type !== 'TSTypeAnnotation') throw `unimplemented ${param.typeAnnotation.type}`;
+            return ofTSType(param.typeAnnotation.typeAnnotation);
+          });
+        if (!tsType.typeAnnotation) throw `return type required`;
+        const ret = ofTSType(tsType.typeAnnotation.typeAnnotation);
+        return Type.functionType(args, ret);
+      }
+
+      default: throw `unimplemented ${tsType.type}`;
+    }
+  }
 }
 
-export class FunctionType {
-  kind = 'function' as const;
-  constructor(public args: Type[], public ret: Type) {}
-}
+type Type = Type.Type;
 
-export type Type =
-  NullType |
-  BooleanType |
-  NumberType |
-  StringType |
-  ObjectType |
-  FunctionType;
-
-const nullType = new NullType();
-export { nullType as null };
-export const boolean = new BooleanType();
-export const number = new NumberType();
-export const string = new StringType();
-
-export function object(fields: { [name: string]: Type }) {
-  return new ObjectType(fields);
-}
+export default Type;

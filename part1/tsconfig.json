@@ -5,6 +5,9 @@
     "strict": true,
     "noFallthroughCasesInSwitch": true,
 
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "target": "es2015",
     "lib": [ "es2017", "es2017.object",  ],
   },
   "include": [ "./src/" ],
