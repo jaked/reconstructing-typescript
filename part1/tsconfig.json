@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "outDir": "./build/",
+
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "lib": [ "es2017", "es2017.object",  ],
+  },
+  "include": [ "./src/" ],
+}
