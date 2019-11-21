@@ -1,8 +1,8 @@
-import parse from './parse';
+import * as Parse from './parse';
 import Type from './type';
 
 function expectOfTSType(typeExpr: string, type: Type) {
-  const ast = parse(`_ as ${typeExpr}`);
+  const ast = Parse.parseExpression(`_ as ${typeExpr}`);
   if (ast.type !== 'TSAsExpression') throw `expected TSAsExpression`;
   expect(Type.ofTSType(ast.typeAnnotation)).toEqual(type);
 }

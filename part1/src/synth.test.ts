@@ -1,18 +1,18 @@
-import Type from './type';
 import Env from './env';
-import parse from './parse';
+import * as Parse from './parse';
 import synth from './synth';
 
-function expectSynth(expr: string, type: Type, env: Env = Env.empty) {
-  const ast = parse(expr);
-  expect(synth(env, ast)).toEqual(type);
+function expectSynth(expr: string, type: string, env: Env = Env.empty) {
+  const exprAst = Parse.parseExpression(expr);
+  const typeAst = Parse.parseType(type);
+  expect(synth(env, exprAst)).toEqual(typeAst);
 }
 
 describe('object', () => {
   it('ok', () => {
     expectSynth(
       '{ foo: 1, bar: true }',
-      Type.object({ foo: Type.number, bar: Type.boolean })
+      '{ foo: number, bar: boolean }'
     );
   });
 });
@@ -21,7 +21,7 @@ describe('function', () => {
   it('ok', () => {
     expectSynth(
       '(x: number) => x',
-      Type.functionType([Type.number], Type.number)
+      '(x: number) => number'
     );
   });
 });
