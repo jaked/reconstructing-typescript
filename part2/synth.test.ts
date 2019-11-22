@@ -1,3 +1,4 @@
+import Type from './type';
 import Env from './env';
 import * as Parse from './parse';
 import synth from './synth';
@@ -22,6 +23,19 @@ describe('function', () => {
     expectSynth(
       '(x: number) => x',
       '(x: number) => number'
+    );
+  });
+});
+
+describe('function application', () => {
+  const env =
+    Env({ f: Type.functionType([Type.number], Type.string) });
+
+  it('ok', () => {
+    expectSynth(
+      'f(7)',
+      'string',
+      env
     );
   });
 });

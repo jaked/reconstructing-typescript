@@ -1,6 +1,7 @@
 import {
   ArrowFunctionExpression,
   BooleanLiteral,
+  CallExpression,
   Expression,
   Identifier,
   NullLiteral,
@@ -10,9 +11,10 @@ import {
 } from '@babel/types';
 import Type from './type';
 import Env from './env';
+import check from './check';
 
 function synthIdentifier(env: Env, ast: Identifier): Type {
-  const type = env.get(ast.name);
+  const type = env(ast.name);
   if (!type) throw `unbound identifier '${ast.name}'`;
   return type;
 }
@@ -67,6 +69,17 @@ function synthFunction(env: Env, ast: ArrowFunctionExpression): Type {
   return Type.functionType(args, ret);
 }
 
+function synthCall(env: Env, ast: CallExpression): Type {
+  const callee = synth(env, ast.callee as Expression);
+  if (callee.type !== 'Function') throw `call expects function`;
+  if (callee.args.length !== ast.arguments.length)
+    throw `wrong number of arguments`;
+  callee.args.forEach((arg, i) => {
+    check(env, ast.arguments[i] as Expression, arg)
+  });
+  return callee.ret;
+}
+
 export default function synth(env: Env, ast: Expression): Type {
   switch (ast.type) {
     case 'Identifier':              return synthIdentifier(env, ast);
@@ -76,6 +89,7 @@ export default function synth(env: Env, ast: Expression): Type {
     case 'StringLiteral':           return synthString(env, ast);
     case 'ObjectExpression':        return synthObject(env, ast);
     case 'ArrowFunctionExpression': return synthFunction(env, ast);
+    case 'CallExpression':          return synthCall(env, ast);
 
     default: throw `unimplemented ${ast.type}`;
   }
