@@ -3,6 +3,7 @@ import {
   Expression,
   NullLiteral,
   NumericLiteral,
+  MemberExpression,
   ObjectExpression,
   StringLiteral
 } from '@babel/types';
@@ -39,6 +40,16 @@ function synthObject(ast: ObjectExpression): Type {
   return Type.object(fields);
 }
 
+function synthMember(ast: MemberExpression): Type {
+  const property = ast.property as Expression;
+  if (property.type !== 'Identifier') throw `unimplemented ${property.type}`;
+  const object = synth(ast.object);
+  if (object.type !== 'Object') throw '. expects object';
+  const type = object.properties[property.name];
+  if (!type) throw `no such property ${property.name}`;
+  return type;
+}
+
 export default function synth(ast: Expression): Type {
   switch (ast.type) {
     case 'NullLiteral':             return synthNull(ast);
@@ -46,6 +57,7 @@ export default function synth(ast: Expression): Type {
     case 'NumericLiteral':          return synthNumber(ast);
     case 'StringLiteral':           return synthString(ast);
     case 'ObjectExpression':        return synthObject(ast);
+    case 'MemberExpression':        return synthMember(ast);
 
     default: throw `unimplemented ${ast.type}`;
   }

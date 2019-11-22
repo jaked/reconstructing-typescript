@@ -4,6 +4,7 @@ import {
   CallExpression,
   Expression,
   Identifier,
+  MemberExpression,
   NullLiteral,
   NumericLiteral,
   ObjectExpression,
@@ -50,6 +51,16 @@ function synthObject(env: Env, ast: ObjectExpression): Type {
   return Type.object(fields);
 }
 
+function synthMember(env: Env, ast: MemberExpression): Type {
+  const property = ast.property as Expression;
+  if (property.type !== 'Identifier') throw `unimplemented ${property.type}`;
+  const object = synth(env, ast.object);
+  if (object.type !== 'Object') throw '. expects object';
+  const type = object.properties[property.name];
+  if (!type) throw `no such property ${property.name}`;
+  return type;
+}
+
 function synthFunction(env: Env, ast: ArrowFunctionExpression): Type {
   const argTypes = ast.params.map(param => {
     if (param.type !== 'Identifier') throw `unimplemented ${param.type}`;
@@ -88,6 +99,7 @@ export default function synth(env: Env, ast: Expression): Type {
     case 'NumericLiteral':          return synthNumber(env, ast);
     case 'StringLiteral':           return synthString(env, ast);
     case 'ObjectExpression':        return synthObject(env, ast);
+    case 'MemberExpression':        return synthMember(env, ast);
     case 'ArrowFunctionExpression': return synthFunction(env, ast);
     case 'CallExpression':          return synthCall(env, ast);
 

@@ -18,6 +18,15 @@ describe('object', () => {
   });
 });
 
+describe('property lookup', () => {
+  it('ok', () => {
+    expectSynth(
+      '{ foo: "bar" }.foo',
+      'string'
+    );
+  });
+});
+
 describe('function', () => {
   it('ok', () => {
     expectSynth(

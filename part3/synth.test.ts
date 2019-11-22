@@ -18,6 +18,15 @@ describe('object', () => {
   });
 });
 
+describe('property lookup', () => {
+  it('ok', () => {
+    expectSynth(
+      '(x: { foo: string }) => x.foo',
+      '(x: { foo: string }) => string'
+    );
+  });
+});
+
 describe('function', () => {
   it('ok', () => {
     expectSynth(
@@ -46,22 +55,6 @@ describe('singleton', () => {
       '7',
       '7'
     )
-  });
-});
-
-describe('property lookup', () => {
-  it('ok', () => {
-    expectSynth(
-      '(x: { foo: string }) => x.foo',
-      '(x: { foo: string }) => string'
-    );
-  });
-
-  it('ok singleton', () => {
-    expectSynth(
-      '{ foo: "bar" }.foo',
-      '"bar"'
-    );
   });
 });
 
