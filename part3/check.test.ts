@@ -52,33 +52,3 @@ describe('function', () => {
     );
   });
 });
-
-describe('singletons', () => {
-  it('ok same value', () => {
-    expectCheck(
-      '7',
-      '7'
-    )
-  });
-
-  it('ok base type', () => {
-    expectCheck(
-      '7',
-      'number'
-    )
-  });
-
-  it('different values', () => {
-    expectCheckToThrow(
-      '7',
-      '9'
-    );
-  });
-
-  it('different base types', () => {
-    expectCheckToThrow(
-      '7',
-      'string'
-    );
-  });
-});

@@ -1,3 +1,4 @@
+import Type from './type';
 import Env from './env';
 import * as Parse from './parse';
 import synth from './synth';
@@ -26,11 +27,56 @@ describe('function', () => {
   });
 });
 
+describe('function application', () => {
+  const env =
+    Env({ f: Type.functionType([Type.number], Type.string) });
+
+  it('ok', () => {
+    expectSynth(
+      'f(7)',
+      'string',
+      env
+    );
+  });
+});
+
 describe('singleton', () => {
   it('ok', () => {
     expectSynth(
       '7',
       '7'
     )
+  });
+});
+
+describe('property lookup', () => {
+  it('ok', () => {
+    expectSynth(
+      '(x: { foo: string }) => x.foo',
+      '(x: { foo: string }) => string'
+    );
+  });
+
+  it('ok singleton', () => {
+    expectSynth(
+      '{ foo: "bar" }.foo',
+      '"bar"'
+    );
+  });
+});
+
+describe('addition', () => {
+  it('ok', () => {
+    expectSynth(
+      '(x: number, y: number) => x + y',
+      '(x: number, y: number) => number'
+    );
+  });
+
+  it('ok singleton', () => {
+    expectSynth(
+      '7 + 9',
+      '16'
+    );
   });
 });
