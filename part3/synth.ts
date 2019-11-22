@@ -5,11 +5,13 @@ import {
   CallExpression,
   Expression,
   Identifier,
+  LogicalExpression,
   MemberExpression,
   NullLiteral,
   NumericLiteral,
   ObjectExpression,
-  StringLiteral
+  StringLiteral,
+  UnaryExpression
 } from '@babel/types';
 import Type from './type';
 import Env from './env';
@@ -115,6 +117,50 @@ function synthBinary(env: Env, ast: BinaryExpression): Type {
   }
 }
 
+function isTruthyType(type: Type) {
+  switch (type.type) {
+    case 'Object': return true;
+    case 'Function': return true;
+    case 'Singleton': return type.value;
+    default: return false;
+  }
+}
+
+function isFalsyType(type: Type) {
+  switch (type.type) {
+    case 'Null': return true;
+    case 'Singleton': return !type.value;
+    default: return false;
+  }
+}
+
+function synthLogical(env: Env, ast: LogicalExpression): Type {
+  if (ast.operator !== '&&') throw `unimplemented ${ast.operator}`;
+
+  const left = synth(env, ast.left);
+  const right = synth(env, ast.right);
+
+  if (isFalsyType(left))
+    return left;
+  else if (isTruthyType(left))
+    return right;
+  else
+    return Type.boolean; // should be union
+}
+
+function synthUnary(env: Env, ast: UnaryExpression): Type {
+  if (ast.operator !== '!') throw `unimplemented ${ast.operator}`;
+
+  const argument = synth(env, ast.argument);
+
+  if (isTruthyType(argument))
+    return Type.singleton(false);
+  else if (isFalsyType(argument))
+    return Type.singleton(true);
+  else
+    return Type.boolean;
+}
+
 export default function synth(env: Env, ast: Expression): Type {
   switch (ast.type) {
     case 'Identifier':              return synthIdentifier(env, ast);
@@ -127,6 +173,8 @@ export default function synth(env: Env, ast: Expression): Type {
     case 'ArrowFunctionExpression': return synthFunction(env, ast);
     case 'CallExpression':          return synthCall(env, ast);
     case 'BinaryExpression':        return synthBinary(env, ast);
+    case 'LogicalExpression':       return synthLogical(env, ast);
+    case 'UnaryExpression':         return synthUnary(env, ast);
 
     default: throw `unimplemented ${ast.type}`;
   }

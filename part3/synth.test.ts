@@ -60,16 +60,78 @@ describe('singleton', () => {
 
 describe('addition', () => {
   it('ok', () => {
+    const env = Env({ x: Type.number, y: Type.number });
     expectSynth(
-      '(x: number, y: number) => x + y',
-      '(x: number, y: number) => number'
+      'x + y',
+      'number',
+      env
     );
   });
 
   it('ok singleton', () => {
+    const env = Env({ x: Type.singleton(7), y: Type.singleton(9) });
     expectSynth(
-      '7 + 9',
-      '16'
+      'x + y',
+      '16',
+      env
+    );
+  });
+});
+
+describe('logical and', () => {
+  it('ok', () => {
+    const env = Env({ x: Type.number, y: Type.string })
+    expectSynth(
+      'x && y',
+      'boolean',
+      env
+    );
+  });
+
+  it('ok left truthy', () => {
+    const env = Env({ x: Type.singleton(0), y: Type.string })
+    expectSynth(
+      'x && y',
+      '0',
+      env
+    );
+  });
+
+  it('ok left falsy', () => {
+    const env = Env({ x: Type.singleton(7), y: Type.string })
+    expectSynth(
+      'x && y',
+      'string',
+      env
+    );
+  });
+});
+
+describe('not', () => {
+  it('ok', () => {
+    const env = Env({ x: Type.number });
+    expectSynth(
+      '!x',
+      'boolean',
+      env
+    );
+  });
+
+  it('ok truthy', () => {
+    const env = Env({ x: Type.object({}) });
+    expectSynth(
+      '!x',
+      'false',
+      env
+    );
+  });
+
+  it('ok falsy', () => {
+    const env = Env({ x: Type.singleton('') });
+    expectSynth(
+      '!x',
+      'true',
+      env
     );
   });
 });
