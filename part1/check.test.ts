@@ -1,17 +1,16 @@
-import Env from './env';
 import * as Parse from './parse';
 import check from './check';
 
-function expectCheck(expr: string, type: string, env: Env = Env.empty) {
+function expectCheck(expr: string, type: string) {
   const exprAst = Parse.parseExpression(expr);
   const typeAst = Parse.parseType(type);
-  expect(() => check(env, exprAst, typeAst)).not.toThrow();
+  expect(() => check(exprAst, typeAst)).not.toThrow();
 }
 
-function expectCheckToThrow(expr: string, type: string, env: Env = Env.empty) {
+function expectCheckToThrow(expr: string, type: string) {
   const exprAst = Parse.parseExpression(expr);
   const typeAst = Parse.parseType(type);
-  expect(() => check(env, exprAst, typeAst)).toThrow();
+  expect(() => check(exprAst, typeAst)).toThrow();
 }
 
 describe('object', () => {
