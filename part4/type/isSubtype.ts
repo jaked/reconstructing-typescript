@@ -1,6 +1,8 @@
-import Type from './type';
+import { Type } from './types';
 
 export default function isSubtype(a: Type, b: Type): boolean {
+  if (a.type === 'Never') return true;
+
   if (a.type === 'Null' && b.type === 'Null') return true;
   if (a.type === 'Boolean' && b.type === 'Boolean') return true;
   if (a.type === 'Number' && b.type === 'Number') return true;
@@ -19,6 +21,28 @@ export default function isSubtype(a: Type, b: Type): boolean {
       a.args.every((a, i) => isSubtype(b.args[i], a)) &&
       isSubtype(a.ret, b.ret);
   }
+
+  if (a.type === 'Singleton') {
+    if (b.type === 'Singleton')
+      return a.value === b.value;
+    else
+      return isSubtype(a.base, b);
+  }
+
+  return false;
+}
+
+export function equiv(a: Type, b: Type): boolean {
+  return isSubtype(a, b) && isSubtype(b, a);
+}
+
+export function isPrimitiveSubtype(a: Type, b: Type): boolean {
+  if (a.type === 'Never') return true;
+
+  if (a.type === 'Null' && b.type === 'Null') return true;
+  if (a.type === 'Boolean' && b.type === 'Boolean') return true;
+  if (a.type === 'Number' && b.type === 'Number') return true;
+  if (a.type === 'String' && b.type === 'String') return true;
 
   if (a.type === 'Singleton') {
     if (b.type === 'Singleton')

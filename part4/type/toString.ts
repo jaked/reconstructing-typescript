@@ -2,6 +2,7 @@ import { Type } from './types';
 
 export default function toString(type: Type): string {
   switch (type.type) {
+    case 'Never':   return 'never';
     case 'Null':    return 'null';
     case 'Boolean': return 'boolean';
     case 'Number':  return 'number';
@@ -23,5 +24,8 @@ export default function toString(type: Type): string {
         return `'${type.value}'`;
       else
         return `${type.value}`;
+
+    case 'Union':
+      return type.types.join(' | ');
   }
 }

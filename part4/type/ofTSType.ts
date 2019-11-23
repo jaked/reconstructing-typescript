@@ -3,6 +3,7 @@ import {
 } from '@babel/types';
 import * as Types from './types';
 import * as Type from './constructors';
+import union from './union';
 
 export default function ofTSType(tsType: TSType): Types.Type {
   switch (tsType.type) {
@@ -47,6 +48,9 @@ export default function ofTSType(tsType: TSType): Types.Type {
         default: throw 'expected BooleanLiteral | NumericLiteral | StringLiteral';
       }
 
-    default: throw `unimplemented ${tsType.type}`;
+    case 'TSUnionType':
+      return union(...tsType.types.map(ofTSType));
+
+      default: throw `unimplemented ${tsType.type}`;
   }
 }

@@ -1,10 +1,10 @@
-import * as Parse from './parse'
-import isSubtype from './isSubtype';
+import * as Parse from '../parse'
+import Type from './index';
 
 function expectIsSubtype(a: string, b: string) {
   const aAst = Parse.parseType(a);
   const bAst = Parse.parseType(b);
-  return expect(isSubtype(aAst, bAst));
+  return expect(Type.isSubtype(aAst, bAst));
 }
 
 describe('objects', () => {

@@ -1,11 +1,17 @@
 export type Type =
+  Never |
   Null |
   Boolean |
   Number |
   String |
   Object |
   Function |
-  Singleton;
+  Singleton |
+  Union;
+
+export type Never = {
+  type: 'Never';
+}
 
 export type Null = {
   type: 'Null';
@@ -56,3 +62,8 @@ export type Singleton =
   SingletonBoolean |
   SingletonNumber |
   SingletonString;
+
+export type Union = {
+  type: 'Union';
+  types: Type[];
+}
