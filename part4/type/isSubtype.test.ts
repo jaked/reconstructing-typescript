@@ -89,3 +89,26 @@ describe('singletons', () => {
     ).toBe(false);
   });
 });
+
+describe('unions', () => {
+  it('ok', () => {
+    expectIsSubtype(
+      "7 | 'foo' | 9",
+      "number | string"
+    ).toBe(true);
+  });
+
+  it('not every on left', () => {
+    expectIsSubtype(
+      "7 | 'foo' | 9",
+      "number"
+    ).toBe(false);
+  })
+
+  it('not some on right', () => {
+    expectIsSubtype(
+      "7",
+      "boolean | string"
+    ).toBe(false);
+  });
+});

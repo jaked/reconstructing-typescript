@@ -3,6 +3,9 @@ import { Type } from './types';
 export default function isSubtype(a: Type, b: Type): boolean {
   if (a.type === 'Never') return true;
 
+  if (a.type === 'Union') return a.types.every(a => isSubtype(a, b));
+  if (b.type === 'Union') return b.types.some(b => isSubtype(a, b));
+
   if (a.type === 'Null' && b.type === 'Null') return true;
   if (a.type === 'Boolean' && b.type === 'Boolean') return true;
   if (a.type === 'Number' && b.type === 'Number') return true;
@@ -39,16 +42,11 @@ export function equiv(a: Type, b: Type): boolean {
 export function isPrimitiveSubtype(a: Type, b: Type): boolean {
   if (a.type === 'Never') return true;
 
-  if (a.type === 'Null' && b.type === 'Null') return true;
-  if (a.type === 'Boolean' && b.type === 'Boolean') return true;
-  if (a.type === 'Number' && b.type === 'Number') return true;
-  if (a.type === 'String' && b.type === 'String') return true;
-
   if (a.type === 'Singleton') {
     if (b.type === 'Singleton')
       return a.value === b.value;
     else
-      return isSubtype(a.base, b);
+      return a.base.type === b.type;
   }
 
   return false;
