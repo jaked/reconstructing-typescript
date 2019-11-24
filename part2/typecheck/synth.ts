@@ -10,7 +10,7 @@ import {
   ObjectExpression,
   StringLiteral
 } from '@babel/types';
-import Type from './type';
+import Type from '../type';
 import Env from './env';
 import check from './check';
 

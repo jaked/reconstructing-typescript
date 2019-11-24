@@ -2,7 +2,7 @@ import {
   Expression,
   ObjectExpression
 } from '@babel/types';
-import Type from './type';
+import Type from '../type';
 import synth from './synth';
 
 function checkObject(ast: ObjectExpression, type: Type.Object) {

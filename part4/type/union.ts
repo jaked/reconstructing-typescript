@@ -17,8 +17,7 @@ function collapseRedundant(xs: Array<Type>): Array<Type> {
 function flatten(types: Array<Type>): Array<Type> {
   const accum: Array<Type> = [];
   types.forEach(t => {
-    if (t.type === 'Never') { /* skip it */ }
-    else if (t.type === 'Union') accum.push(...t.types); // t already flattened
+    if (t.type === 'Union') accum.push(...t.types); // t already flattened
     else accum.push(t);
   });
   return accum;

@@ -3,7 +3,7 @@ import {
   Expression,
   ObjectExpression
 } from '@babel/types';
-import Type from './type';
+import Type from '../type';
 import Env from './env';
 import synth from './synth';
 

@@ -1,12 +1,11 @@
-import Type from './type';
-import Env from './env';
-import * as Parse from './parse';
-import synth from './synth';
+import Type from '../type';
+import { Typecheck, Env } from './index';
+import * as Parse from '../parse';
 
 function expectSynth(expr: string, type: string, env: Env = Env.empty) {
   const exprAst = Parse.parseExpression(expr);
   const typeAst = Parse.parseType(type);
-  expect(synth(env, exprAst)).toEqual(typeAst);
+  expect(Typecheck.synth(env, exprAst)).toEqual(typeAst);
 }
 
 describe('object', () => {
@@ -25,17 +24,6 @@ describe('property lookup', () => {
       '"bar"'
     );
   });
-
-  it('ok union', () => {
-    const env = Env({
-      o: Parse.parseType('{ foo: string } | { foo: boolean }')
-    });
-    expectSynth(
-      'o.foo',
-      'string | boolean',
-      env
-    );
-  });
 });
 
 describe('function', () => {
@@ -48,27 +36,13 @@ describe('function', () => {
 });
 
 describe('function application', () => {
+  const env =
+    Env({ f: Type.functionType([Type.number], Type.string) });
+
   it('ok', () => {
-    const env = Env({
-      f: Type.functionType([Type.number], Type.string)
-    });
     expectSynth(
       'f(7)',
       'string',
-      env
-    );
-  });
-
-  it('ok union', () => {
-    const env = Env({
-      f: Type.union(
-        Type.functionType([Type.number], Type.string),
-        Type.functionType([Type.number], Type.boolean)
-      )
-    });
-    expectSynth(
-      'f(7)',
-      'string | boolean',
       env
     );
   });
@@ -101,18 +75,6 @@ describe('addition', () => {
       env
     );
   });
-
-  it('ok union', () => {
-    const env = Env({
-      x: Parse.parseType('7 | 9'),
-      y: Parse.parseType('11 | 13')
-    });
-    expectSynth(
-      'x + y',
-      '18 | 20 | 22',
-      env
-    );
-  });
 });
 
 describe('logical and', () => {
@@ -120,7 +82,7 @@ describe('logical and', () => {
     const env = Env({ x: Type.number, y: Type.string })
     expectSynth(
       'x && y',
-      'number | string',
+      'boolean',
       env
     );
   });
@@ -139,18 +101,6 @@ describe('logical and', () => {
     expectSynth(
       'x && y',
       'string',
-      env
-    );
-  });
-
-  it('ok union', () => {
-    const env = Env({
-      x: Parse.parseType('boolean | 7'),
-      y: Parse.parseType('string | 9')
-    });
-    expectSynth(
-      'x && y',
-      'boolean | string | 9',
       env
     );
   });
@@ -180,17 +130,6 @@ describe('not', () => {
     expectSynth(
       '!x',
       'true',
-      env
-    );
-  });
-
-  it('ok union', () => {
-    const env = Env({
-      x: Parse.parseType('7 | "" | string')
-    });
-    expectSynth(
-      '!x',
-      'boolean',
       env
     );
   });

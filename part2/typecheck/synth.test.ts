@@ -1,12 +1,11 @@
-import Type from './type';
-import Env from './env';
-import * as Parse from './parse';
-import synth from './synth';
+import Type from '../type';
+import { Typecheck, Env } from './index';
+import * as Parse from '../parse';
 
 function expectSynth(expr: string, type: string, env: Env = Env.empty) {
   const exprAst = Parse.parseExpression(expr);
   const typeAst = Parse.parseType(type);
-  expect(synth(env, exprAst)).toEqual(typeAst);
+  expect(Typecheck.synth(env, exprAst)).toEqual(typeAst);
 }
 
 describe('object', () => {

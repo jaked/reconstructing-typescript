@@ -1,16 +1,16 @@
-import * as Parse from './parse';
-import check from './check';
+import Typecheck from './index';
+import * as Parse from '../parse';
 
 function expectCheck(expr: string, type: string) {
   const exprAst = Parse.parseExpression(expr);
   const typeAst = Parse.parseType(type);
-  expect(() => check(exprAst, typeAst)).not.toThrow();
+  expect(() => Typecheck.check(exprAst, typeAst)).not.toThrow();
 }
 
 function expectCheckToThrow(expr: string, type: string) {
   const exprAst = Parse.parseExpression(expr);
   const typeAst = Parse.parseType(type);
-  expect(() => check(exprAst, typeAst)).toThrow();
+  expect(() => Typecheck.check(exprAst, typeAst)).toThrow();
 }
 
 describe('object', () => {

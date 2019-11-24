@@ -3,10 +3,9 @@ import {
   Expression,
   ObjectExpression
 } from '@babel/types';
-import Type from './type';
+import Type from '../type';
 import Env from './env';
 import synth from './synth';
-import isSubtype from './isSubtype';
 
 function checkObject(env: Env, ast: ObjectExpression, type: Type.Object) {
   const astProps: { [name: string]: Expression } =
@@ -55,6 +54,6 @@ export default function check(env: Env, ast: Expression, type: Type) {
     return checkFunction(env, ast, type);
 
   const synthType = synth(env, ast);
-  if (!isSubtype(synthType, type))
+  if (!Type.isSubtype(synthType, type))
     throw `expected ${Type.toString(type)}, got ${Type.toString(synthType)}`;
 }

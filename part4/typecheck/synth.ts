@@ -13,7 +13,7 @@ import {
   StringLiteral,
   UnaryExpression
 } from '@babel/types';
-import Type from './type';
+import Type from '../type';
 import Env from './env';
 import check from './check';
 
@@ -57,11 +57,12 @@ function synthObject(env: Env, ast: ObjectExpression): Type {
 function synthMember(env: Env, ast: MemberExpression): Type {
   const property = ast.property as Expression;
   if (property.type !== 'Identifier') throw `unimplemented ${property.type}`;
-  const object = synth(env, ast.object);
-  if (object.type !== 'Object') throw '. expects object';
-  const type = object.properties[property.name];
-  if (!type) throw `no such property ${property.name}`;
-  return type;
+  return synthAndThen(env, ast.object, object => {
+    if (object.type !== 'Object') throw '. expects object';
+    const type = object.properties[property.name];
+    if (!type) throw `no such property ${property.name}`;
+    return type;
+  });
 }
 
 function synthFunction(env: Env, ast: ArrowFunctionExpression): Type {
@@ -84,37 +85,40 @@ function synthFunction(env: Env, ast: ArrowFunctionExpression): Type {
 }
 
 function synthCall(env: Env, ast: CallExpression): Type {
-  const callee = synth(env, ast.callee as Expression);
-  if (callee.type !== 'Function') throw `call expects function`;
-  if (callee.args.length !== ast.arguments.length)
-    throw `expected ${callee.args.length} args, got ${ast.arguments.length} args`;
-  callee.args.forEach((arg, i) => {
-    check(env, ast.arguments[i] as Expression, arg)
+  return synthAndThen(env, ast.callee as Expression, callee =>{
+    if (callee.type !== 'Function') throw `call expects function`;
+    if (callee.args.length !== ast.arguments.length)
+      throw `expected ${callee.args.length} args, got ${ast.arguments.length} args`;
+    callee.args.forEach((arg, i) => {
+      check(env, ast.arguments[i] as Expression, arg)
+    });
+    return callee.ret;
   });
-  return callee.ret;
 }
 
 function synthBinary(env: Env, ast: BinaryExpression): Type {
   if (ast.operator !== '+') throw `unimplemented ${ast.operator}`;
 
-  const left = synth(env, ast.left);
-  const right = synth(env, ast.right);
+  return synthAndThen(env, ast.left, left => {
+    return synthAndThen(env, ast.right, right => {
 
-  if (left.type === 'Singleton' && right.type === 'Singleton') {
-    if (left.base.type === 'Number' && right.base.type === 'Number') {
-      if (typeof left.value !== 'number' || typeof right.value !== 'number')
-        throw 'unexpected value';
-      return Type.singleton(left.value + right.value);
-    } else {
-      throw '+ expects numbers';
-    }
+      if (left.type === 'Singleton' && right.type === 'Singleton') {
+        if (left.base.type === 'Number' && right.base.type === 'Number') {
+          if (typeof left.value !== 'number' || typeof right.value !== 'number')
+            throw 'unexpected value';
+          return Type.singleton(left.value + right.value);
+        } else {
+          throw '+ expects numbers';
+        }
 
-  } else {
-    if (left.type === 'Number' && right.type == 'Number')
-      return Type.number;
-    else
-      throw '+ expects numbers';
-  }
+      } else {
+        if (left.type === 'Number' && right.type == 'Number')
+          return Type.number;
+        else
+          throw '+ expects numbers';
+      }
+    });
+  });
 }
 
 function isTruthyType(type: Type) {
@@ -137,28 +141,39 @@ function isFalsyType(type: Type) {
 function synthLogical(env: Env, ast: LogicalExpression): Type {
   if (ast.operator !== '&&') throw `unimplemented ${ast.operator}`;
 
-  const left = synth(env, ast.left);
-  const right = synth(env, ast.right);
+  return synthAndThen(env, ast.left, left => {
+    return synthAndThen(env, ast.right, right => {
 
-  if (isFalsyType(left))
-    return left;
-  else if (isTruthyType(left))
-    return right;
-  else
-    return Type.boolean; // should be union
+      if (isFalsyType(left))
+        return left;
+      else if (isTruthyType(left))
+        return right;
+      else
+        return Type.union(left, right);
+    });
+  });
 }
 
 function synthUnary(env: Env, ast: UnaryExpression): Type {
   if (ast.operator !== '!') throw `unimplemented ${ast.operator}`;
 
-  const argument = synth(env, ast.argument);
+  return synthAndThen(env, ast.argument, argument => {
 
-  if (isTruthyType(argument))
+    if (isTruthyType(argument))
     return Type.singleton(false);
   else if (isFalsyType(argument))
     return Type.singleton(true);
   else
     return Type.boolean;
+  });
+}
+
+function synthAndThen(env: Env, ast: Expression, fn: (t: Type) => Type) {
+  const type = synth(env, ast);
+  if (type.type === 'Union')
+    return Type.union(...type.types.map(fn));
+  else
+    return fn(type);
 }
 
 export default function synth(env: Env, ast: Expression): Type {

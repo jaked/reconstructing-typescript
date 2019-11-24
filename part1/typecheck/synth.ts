@@ -1,13 +1,13 @@
 import {
   BooleanLiteral,
   Expression,
+  MemberExpression,
   NullLiteral,
   NumericLiteral,
-  MemberExpression,
   ObjectExpression,
   StringLiteral
 } from '@babel/types';
-import Type from './type';
+import Type from '../type';
 
 function synthNull(ast: NullLiteral): Type {
   return Type.nullType;
