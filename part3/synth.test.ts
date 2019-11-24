@@ -21,8 +21,8 @@ describe('object', () => {
 describe('property lookup', () => {
   it('ok', () => {
     expectSynth(
-      '(x: { foo: string }) => x.foo',
-      '(x: { foo: string }) => string'
+      '{ foo: "bar" }.foo',
+      '"bar"'
     );
   });
 });
