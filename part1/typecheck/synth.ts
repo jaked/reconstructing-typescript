@@ -41,6 +41,7 @@ function synthObject(ast: ObjectExpression): Type {
 }
 
 function synthMember(ast: MemberExpression): Type {
+  if (ast.computed) throw `unimplemented computed`;
   const property = ast.property as Expression;
   if (property.type !== 'Identifier') throw `unimplemented ${property.type}`;
   const object = synth(ast.object);

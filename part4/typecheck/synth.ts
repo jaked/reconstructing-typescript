@@ -55,6 +55,7 @@ function synthObject(env: Env, ast: ObjectExpression): Type {
 }
 
 function synthMember(env: Env, ast: MemberExpression): Type {
+  if (ast.computed) throw `unimplemented computed`;
   const property = ast.property as Expression;
   if (property.type !== 'Identifier') throw `unimplemented ${property.type}`;
   return synthAndThen(env, ast.object, object => {
