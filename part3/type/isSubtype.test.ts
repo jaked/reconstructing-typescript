@@ -1,10 +1,10 @@
-import * as Parse from './parse'
-import isSubtype from './isSubtype';
+import * as Parse from '../parse'
+import Type from './index';
 
 function expectIsSubtype(a: string, b: string) {
   const aAst = Parse.parseType(a);
   const bAst = Parse.parseType(b);
-  return expect(isSubtype(aAst, bAst));
+  return expect(Type.isSubtype(aAst, bAst));
 }
 
 describe('objects', () => {
@@ -56,6 +56,36 @@ describe('functions', () => {
     expectIsSubtype(
       '(x: {}) => boolean',
       '(x: { bar: boolean }) => number'
+    ).toBe(false);
+  });
+});
+
+describe('singletons', () => {
+  it('ok same value', () => {
+    expectIsSubtype(
+      '7',
+      '7'
+    ).toBe(true);
+  });
+
+  it('ok base type', () => {
+    expectIsSubtype(
+      '7',
+      'number'
+    ).toBe(true);
+  });
+
+  it('different values', () => {
+    expectIsSubtype(
+      '7',
+      '9'
+    ).toBe(false);
+  });
+
+  it('different base types', () => {
+    expectIsSubtype(
+      '7',
+      'string'
     ).toBe(false);
   });
 });

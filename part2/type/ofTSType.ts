@@ -3,11 +3,9 @@ import {
 } from '@babel/types';
 import * as Types from './types';
 import * as Type from './constructors';
-import union from './union';
 
 export default function ofTSType(tsType: TSType): Types.Type {
   switch (tsType.type) {
-    case 'TSNeverKeyword': return Type.never;
     case 'TSNullKeyword': return Type.nullType;
     case 'TSBooleanKeyword': return Type.boolean;
     case 'TSNumberKeyword': return Type.number;
@@ -40,17 +38,6 @@ export default function ofTSType(tsType: TSType): Types.Type {
       const ret = ofTSType(tsType.typeAnnotation.typeAnnotation);
       return Type.functionType(args, ret);
     }
-
-    case 'TSLiteralType':
-      switch (tsType.literal.type) {
-        case 'BooleanLiteral': return Type.singleton(tsType.literal.value);
-        case 'NumericLiteral': return Type.singleton(tsType.literal.value);
-        case 'StringLiteral': return Type.singleton(tsType.literal.value);
-        default: throw 'expected BooleanLiteral | NumericLiteral | StringLiteral';
-      }
-
-    case 'TSUnionType':
-      return union(...tsType.types.map(ofTSType));
 
     default: throw `unimplemented ${tsType.type}`;
   }

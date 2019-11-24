@@ -1,5 +1,5 @@
-import * as Parse from './parse';
-import Type from './type';
+import * as Parse from '../parse';
+import Type from './index';
 
 function expectOfTSType(typeExpr: string, type: Type) {
   const ast = Parse.parseExpression(`_ as ${typeExpr}`);
@@ -18,5 +18,12 @@ it('function', () => {
   expectOfTSType(
     '(x: number) => string',
     Type.functionType([Type.number], Type.string)
+  );
+});
+
+it('singleton', () => {
+  expectOfTSType(
+    '7',
+    Type.singleton(7)
   );
 });

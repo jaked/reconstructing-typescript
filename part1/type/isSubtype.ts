@@ -1,4 +1,4 @@
-import Type from './type';
+import { Type } from './types';
 
 export default function isSubtype(a: Type, b: Type): boolean {
   if (a.type === 'Null' && b.type === 'Null') return true;
