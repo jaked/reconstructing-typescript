@@ -84,7 +84,7 @@ function synthCall(env: Env, ast: CallExpression): Type {
   const callee = synth(env, ast.callee as Expression);
   if (callee.type !== 'Function') throw `call expects function`;
   if (callee.args.length !== ast.arguments.length)
-    throw `wrong number of arguments`;
+    throw `expected ${callee.args.length} args, got ${ast.arguments.length} args`;
   callee.args.forEach((arg, i) => {
     check(env, ast.arguments[i] as Expression, arg)
   });
