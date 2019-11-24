@@ -3,6 +3,7 @@ import { Type } from './types';
 export default function toString(type: Type): string {
   switch (type.type) {
     case 'Never':   return 'never';
+    case 'Unknown': return 'unknown';
     case 'Null':    return 'null';
     case 'Boolean': return 'boolean';
     case 'Number':  return 'number';
@@ -35,5 +36,16 @@ export default function toString(type: Type): string {
             return typeString;
         })
         .join(' | ');
+
+    case 'Intersection':
+      return type.types
+        .map(type => {
+          const typeString = toString(type);
+          if (type.type === 'Function' || type.type === 'Union')
+            return `(${typeString})`
+          else
+            return typeString;
+        })
+        .join(' & ');
   }
 }
