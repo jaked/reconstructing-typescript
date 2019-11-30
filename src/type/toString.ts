@@ -1,8 +1,9 @@
 import { Type } from './types';
-import { isString } from './validators';
+import { isFunction, isString } from './validators';
 
 export default function toString(type: Type): string {
   switch (type.type) {
+    case 'Never':   return 'never';
     case 'Null':    return 'null';
     case 'Boolean': return 'boolean';
     case 'Number':  return 'number';
@@ -26,5 +27,16 @@ export default function toString(type: Type): string {
         return `'${type.value}'`;
       else
         return `${type.value}`;
+
+    case 'Union':
+      return type.types
+        .map(type => {
+          const typeString = toString(type);
+          if (isFunction(type))
+            return `(${typeString})`
+          else
+            return typeString;
+        })
+        .join(' | ');
   }
 }

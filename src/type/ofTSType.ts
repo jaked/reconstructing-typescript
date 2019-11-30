@@ -2,9 +2,14 @@ import * as AST from '@babel/types';
 import { bug, err } from '../util/err';
 import * as Types from './types';
 import * as Type from './constructors';
+import union from './union';
 
 export default function ofTSType(tsType: AST.TSType): Types.Type {
   switch (tsType.type) {
+    case 'TSParenthesizedType':
+      return ofTSType(tsType.typeAnnotation);
+
+    case 'TSNeverKeyword': return Type.never;
     case 'TSNullKeyword': return Type.nullType;
     case 'TSBooleanKeyword': return Type.boolean;
     case 'TSNumberKeyword': return Type.number;
@@ -44,6 +49,9 @@ export default function ofTSType(tsType: AST.TSType): Types.Type {
         case 'StringLiteral': return Type.singleton(tsType.literal.value);
         default: bug(`unimplemented ${tsType.literal.type}`);
       }
+
+    case 'TSUnionType':
+      return union(...tsType.types.map(ofTSType));
 
     default: bug(`unimplemented ${tsType.type}`);
   }

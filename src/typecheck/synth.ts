@@ -59,11 +59,12 @@ function synthMember(env: Env, ast: AST.MemberExpression): Type {
   const prop = ast.property;
   if (!AST.isIdentifier(prop)) bug(`unimplemented ${prop.type}`);
   if (ast.computed) bug(`unimplemented computed`);
-  const object = synth(env, ast.object);
-  if (!Type.isObject(object)) err('. expects object', ast.object);
-  const type = Type.propType(object, prop.name);
-  if (!type) err(`no such property ${prop.name}`, prop);
-  return type;
+  return synthAndThen(env, ast.object, object => {
+    if (!Type.isObject(object)) err('. expects object', ast.object);
+    const type = Type.propType(object, prop.name);
+    if (!type) err(`no such property ${prop.name}`, prop);
+    return type;
+  });
 }
 );
 
@@ -101,78 +102,83 @@ function synthFunction(env: Env, ast: AST.ArrowFunctionExpression): Type {
 const synthCall = Trace.instrument('synthCall',
 function synthCall(env: Env, ast: AST.CallExpression): Type {
   if (!AST.isExpression(ast.callee)) bug(`unimplemented ${ast.callee.type}`);
-  const callee = synth(env, ast.callee);
-  if (!Type.isFunction(callee)) err(`call expects function`, ast.callee);
-  if (callee.args.length !== ast.arguments.length)
-    err(`expected ${callee.args.length} args, got ${ast.arguments.length} args`, ast);
-  callee.args.forEach((type, i) => {
-    const arg = ast.arguments[i];
-    if (!AST.isExpression(arg)) bug(`unimplemented ${arg.type}`)
-    check(env, arg, type);
+  return synthAndThen(env, ast.callee, callee => {
+    if (!Type.isFunction(callee)) err(`call expects function`, ast.callee);
+    if (callee.args.length !== ast.arguments.length)
+      err(`expected ${callee.args.length} args, got ${ast.arguments.length} args`, ast);
+      callee.args.forEach((type, i) => {
+        const arg = ast.arguments[i];
+        if (!AST.isExpression(arg)) bug(`unimplemented ${arg.type}`)
+        check(env, arg, type);
+      });
+    return callee.ret
   });
-  return callee.ret;
 }
 );
 
 const synthBinary = Trace.instrument('synthBinary',
 function synthBinary(env: Env, ast: AST.BinaryExpression): Type {
   if (!AST.isExpression(ast.left)) bug(`unimplemented ${ast.left.type}`)
-  const left = synth(env, ast.left);
-  const right = synth(env, ast.right);
-  switch (ast.operator) {
-    case '===':
-      if (Type.isSingleton(left) && Type.isSingleton(right))
-        return Type.singleton(left.value === right.value);
-      else
-        return Type.boolean;
+  return synthAndThen(env, ast.left, left => {
+    return synthAndThen(env, ast.right, right => {
+      switch (ast.operator) {
+        case '===':
+          if (Type.isSingleton(left) && Type.isSingleton(right))
+            return Type.singleton(left.value === right.value);
+          else
+            return Type.boolean;
 
-    case '!==':
-      if (Type.isSingleton(left) && Type.isSingleton(right))
-        return Type.singleton(left.value !== right.value);
-      else
-        return Type.boolean;
+        case '!==':
+          if (Type.isSingleton(left) && Type.isSingleton(right))
+            return Type.singleton(left.value !== right.value);
+          else
+            return Type.boolean;
 
-    case '+':
-      if (Type.isSubtype(left, Type.number) && Type.isSubtype(right, Type.number)) {
-        if (Type.isSingleton(left) && Type.isSingleton(right)) {
-          if (typeof left.value !== 'number' || typeof right.value !== 'number')
-            bug('unexpected value');
-          return Type.singleton(left.value + right.value);
-        } else {
-          return Type.number;
-        }
-      } else {
-        err('+ expects numbers', ast);
+        case '+':
+          if (Type.isSubtype(left, Type.number) && Type.isSubtype(right, Type.number)) {
+            if (Type.isSingleton(left) && Type.isSingleton(right)) {
+              if (typeof left.value !== 'number' || typeof right.value !== 'number')
+                bug('unexpected value');
+              return Type.singleton(left.value + right.value);
+            } else {
+              return Type.number;
+            }
+          } else {
+            err('+ expects numbers', ast);
+          }
+
+        default: bug(`unimplemented ${ast.operator}`);
       }
-
-    default: bug(`unimplemented ${ast.operator}`);
-  }
+    });
+  });
 }
 );
 
 const synthLogical = Trace.instrument('synthLogical',
 function synthLogical(env: Env, ast: AST.LogicalExpression): Type {
-  const left = synth(env, ast.left);
-  const right = synth(env, ast.right);
-  switch (ast.operator) {
-    case '&&':
-      if (Type.isFalsy(left))
-        return left;
-      else if (Type.isTruthy(left))
-        return right;
-      else
-        return Type.boolean; // should be union
+  return synthAndThen(env, ast.left, left => {
+    return synthAndThen(env, ast.right, right => {
+      switch (ast.operator) {
+        case '&&':
+          if (Type.isFalsy(left))
+            return left;
+          else if (Type.isTruthy(left))
+            return right;
+          else
+            return Type.union(left, right);
 
-    case '||':
-      if (Type.isTruthy(left))
-        return left;
-      else if (Type.isFalsy(left))
-        return right;
-      else
-        return Type.boolean; // should be union
+        case '||':
+          if (Type.isTruthy(left))
+            return left;
+          else if (Type.isFalsy(left))
+            return right;
+          else
+            return Type.union(left, right);
 
-    default: bug(`unimplemented ${ast.operator}`);
-  }
+        default: bug(`unimplemented ${ast.operator}`);
+      }
+    });
+  });
 }
 );
 
@@ -185,28 +191,38 @@ function typeofType(type: Type): string {
     case 'Number': return 'number';
     case 'Object': return 'object';
     case 'String': return 'string';
+    default: bug(`unexpected ${type.type}`);
   }
 }
 
 const synthUnary = Trace.instrument('synthUnary',
 function synthUnary(env: Env, ast: AST.UnaryExpression): Type {
-  const argument = synth(env, ast.argument);
-  switch (ast.operator) {
-    case '!':
-      if (Type.isTruthy(argument))
-        return Type.singleton(false);
-      else if (Type.isFalsy(argument))
-        return Type.singleton(true);
-      else
-        return Type.boolean;
+  return synthAndThen(env, ast.argument, argument => {
+    switch (ast.operator) {
+      case '!':
+        if (Type.isTruthy(argument))
+          return Type.singleton(false);
+        else if (Type.isFalsy(argument))
+          return Type.singleton(true);
+        else
+          return Type.boolean;
 
-    case 'typeof':
-      return Type.singleton(typeofType(argument));
+      case 'typeof':
+        return Type.singleton(typeofType(argument));
 
-    default: bug(`unimplemented ${ast.operator}`);
-  }
+      default: bug(`unimplemented ${ast.operator}`);
+    }
+  });
 }
 );
+
+function synthAndThen(env: Env, ast: AST.Expression, fn: (t: Type) => Type) {
+  const type = synth(env, ast);
+  if (Type.isUnion(type))
+    return Type.union(...type.types.map(fn));
+  else
+    return fn(type);
+}
 
 const synth = Trace.instrument('synth',
 function synth(env: Env, ast: AST.Expression): Type {

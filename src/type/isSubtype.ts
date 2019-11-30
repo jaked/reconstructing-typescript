@@ -5,6 +5,11 @@ import * as Type from './validators';
 
 const isSubtype = Trace.instrument('isSubtype',
 function (a: Types.Type, b: Types.Type): boolean {
+  if (Type.isNever(a)) return true;
+
+  if (Type.isUnion(a)) return a.types.every(a => isSubtype(a, b));
+  if (Type.isUnion(b)) return b.types.some(b => isSubtype(a, b));
+
   if (Type.isNull(a) && Type.isNull(b)) return true;
   if (Type.isBoolean(a) && Type.isBoolean(b)) return true;
   if (Type.isNumber(a) && Type.isNumber(b)) return true;
@@ -36,3 +41,20 @@ function (a: Types.Type, b: Types.Type): boolean {
 );
 
 export default isSubtype;
+
+export function equiv(a: Types.Type, b: Types.Type): boolean {
+  return isSubtype(a, b) && isSubtype(b, a);
+}
+
+export function isPrimitiveSubtype(a: Types.Type, b: Types.Type): boolean {
+  if (Type.isNever(a)) return true;
+
+  if (Type.isSingleton(a)) {
+    if (Type.isSingleton(b))
+      return a.value === b.value;
+    else
+      return a.base.type === b.type;
+  }
+
+  return false;
+}

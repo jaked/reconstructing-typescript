@@ -33,6 +33,17 @@ describe('property lookup', () => {
       '"bar"'
     );
   });
+
+  it('ok union', () => {
+    const env = Env({
+      o: Parse.parseType('{ foo: string } | { foo: boolean }')
+    });
+    expectSynth(
+      'o.foo',
+      'string | boolean',
+      env
+    );
+  });
 });
 
 describe('as', () => {
@@ -61,8 +72,9 @@ describe('function', () => {
 });
 
 describe('function application', () => {
-  const env =
-    Env({ f: Type.functionType([Type.number], Type.string) });
+  const env = Env({
+    f: Type.functionType([Type.number], Type.string)
+  });
 
   it('ok', () => {
     expectSynth(
@@ -76,6 +88,17 @@ describe('function application', () => {
     expectSynthToThrow(
       'f(false)',
       'at false',
+      env
+    );
+  });
+
+  it('ok union', () => {
+    const env = Env({
+      f: Parse.parseType('((n: number) => string) | ((n: number) => boolean)')
+    });
+    expectSynth(
+      'f(7)',
+      'string | boolean',
       env
     );
   });
@@ -117,6 +140,18 @@ describe('addition', () => {
       env
     );
   });
+
+  it('ok union', () => {
+    const env = Env({
+      x: Parse.parseType('7 | 9'),
+      y: Parse.parseType('11 | 13')
+    });
+    expectSynth(
+      'x + y',
+      '18 | 20 | 22',
+      env
+    );
+  });
 });
 
 describe('equality', () => {
@@ -144,7 +179,7 @@ describe('logical and', () => {
     const env = Env({ x: Type.number, y: Type.string })
     expectSynth(
       'x && y',
-      'boolean',
+      'number | string',
       env
     );
   });
@@ -166,6 +201,18 @@ describe('logical and', () => {
       env
     );
   });
+
+  it('ok union', () => {
+    const env = Env({
+      x: Parse.parseType('boolean | 7'),
+      y: Parse.parseType('string | 9')
+    });
+    expectSynth(
+      'x && y',
+      'boolean | string | 9',
+      env
+    );
+  });
 });
 
 describe('logical or', () => {
@@ -173,7 +220,7 @@ describe('logical or', () => {
     const env = Env({ x: Type.number, y: Type.string })
     expectSynth(
       'x || y',
-      'boolean',
+      'number | string',
       env
     );
   });
@@ -221,6 +268,17 @@ describe('not', () => {
     expectSynth(
       '!x',
       'true',
+      env
+    );
+  });
+
+  it('ok union', () => {
+    const env = Env({
+      x: Parse.parseType('7 | "" | string')
+    });
+    expectSynth(
+      '!x',
+      'boolean',
       env
     );
   });

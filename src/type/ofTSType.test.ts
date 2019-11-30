@@ -28,3 +28,10 @@ it('singleton', () => {
     Type.singleton(7)
   );
 });
+
+it('union', () => {
+  expectOfTSType(
+    '7 | 9',
+    Type.union(Type.singleton(7), Type.singleton(9))
+  );
+});

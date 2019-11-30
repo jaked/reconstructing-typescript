@@ -1,5 +1,9 @@
 import * as Types from './types';
 
+export function isNever(type: Types.Type): type is Types.Never {
+  return type.type === 'Never';
+}
+
 export function isNull(type: Types.Type): type is Types.Null {
   return type.type === 'Null';
 }
@@ -26,4 +30,8 @@ export function isFunction(type: Types.Type): type is Types.Function {
 
 export function isSingleton(type: Types.Type): type is Types.Singleton {
   return type.type === 'Singleton';
+}
+
+export function isUnion(type: Types.Type): type is Types.Union {
+  return type.type === 'Union';
 }
