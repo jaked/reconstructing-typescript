@@ -14,5 +14,10 @@ export default function toString(type: Type): string {
         );
       return `{ ${props.join(', ')} }`;
     }
+
+    case 'Function': {
+      const args = type.args.map(toString);
+      return `(${args.join(', ')}) => ${type.ret}`
+    }
   }
 }

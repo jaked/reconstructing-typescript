@@ -3,7 +3,8 @@ export type Type =
   Boolean |
   Number |
   String |
-  Object;
+  Object |
+  Function;
 
 export type Null = {
   type: 'Null';
@@ -24,4 +25,10 @@ export type String = {
 export type Object = {
   type: 'Object';
   properties: { name: string, type: Type }[];
+}
+
+export type Function = {
+  type: 'Function';
+  args: Type[];
+  ret: Type;
 }

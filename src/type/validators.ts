@@ -19,3 +19,7 @@ export function isString(type: Types.Type): type is Types.String {
 export function isObject(type: Types.Type): type is Types.Object {
   return type.type === 'Object';
 }
+
+export function isFunction(type: Types.Type): type is Types.Function {
+  return type.type === 'Function';
+}

@@ -12,3 +12,7 @@ export function object(properties: { name: string, type: Types.Type }[] | { [nam
     return object(Object.entries(properties).map(([ name, type ]) => ({ name, type })));
   }
 }
+
+export function functionType(args: Types.Type[], ret: Types.Type): Types.Function {
+  return { type: 'Function', args, ret };
+}

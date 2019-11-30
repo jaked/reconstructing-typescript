@@ -18,6 +18,12 @@ function (a: Types.Type, b: Types.Type): boolean {
     });
   }
 
+  if (Type.isFunction(a) && Type.isFunction(b)) {
+    return a.args.length === b.args.length &&
+      a.args.every((a, i) => isSubtype(b.args[i], a)) &&
+      isSubtype(a.ret, b.ret);
+  }
+
   return false;
 }
 );

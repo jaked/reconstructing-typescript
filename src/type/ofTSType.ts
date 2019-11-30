@@ -24,6 +24,19 @@ export default function ofTSType(tsType: AST.TSType): Types.Type {
       return Type.object(props);
     }
 
+    case 'TSFunctionType': {
+      const args =
+        tsType.parameters.map(param => {
+          if (!AST.isIdentifier(param)) bug(`unimplemented ${param.type}`);
+          if (!param.typeAnnotation) err(`type required for ${param.name}`, param);
+          if (!AST.isTSTypeAnnotation(param.typeAnnotation)) bug(`unimplemented ${param.typeAnnotation.type}`);
+          return ofTSType(param.typeAnnotation.typeAnnotation);
+        });
+      if (!tsType.typeAnnotation) err(`return type required`, tsType);
+      const ret = ofTSType(tsType.typeAnnotation.typeAnnotation);
+      return Type.functionType(args, ret);
+    }
+
     default: bug(`unimplemented ${tsType.type}`);
   }
 }

@@ -1,10 +1,11 @@
+import Type from '../type';
+import { Typecheck, Env } from './index';
 import * as Parse from '../ast/parse';
-import Typecheck from './index';
 
-function expectSynth(expr: string, type: string) {
+function expectSynth(expr: string, type: string, env: Env = Env.empty) {
   const exprAst = Parse.parseExpression(expr);
   const typeAst = Parse.parseType(type);
-  expect(Typecheck.synth(exprAst)).toEqual(typeAst);
+  expect(Typecheck.synth(env, exprAst)).toEqual(typeAst);
 }
 
 describe('object', () => {
@@ -30,6 +31,28 @@ describe('as', () => {
     expectSynth(
       '{ foo: 1 } as { foo: number }',
       '{ foo: number }'
+    );
+  })
+});
+
+describe('function', () => {
+  it('ok', () => {
+    expectSynth(
+      '(x: number) => x',
+      '(x: number) => number'
+    );
+  });
+});
+
+describe('function application', () => {
+  const env =
+    Env({ f: Type.functionType([Type.number], Type.string) });
+
+  it('ok', () => {
+    expectSynth(
+      'f(7)',
+      'string',
+      env
     );
   });
 });

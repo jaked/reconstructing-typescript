@@ -14,3 +14,10 @@ it('object', () => {
     Type.object({ foo: Type.number, bar: Type.boolean })
   );
 });
+
+it('function', () => {
+  expectOfTSType(
+    '(x: number) => string',
+    Type.functionType([Type.number], Type.string)
+  );
+});

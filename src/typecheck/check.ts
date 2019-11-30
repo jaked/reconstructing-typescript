@@ -2,10 +2,11 @@ import * as AST from '@babel/types';
 import { bug, err } from '../util/err';
 import * as Trace from '../util/trace';
 import Type from '../type';
+import Env from './env';
 import synth from './synth';
 
 const checkObject = Trace.instrument('checkObject',
-function checkObject(ast: AST.ObjectExpression, type: Type.Object) {
+function checkObject(env: Env, ast: AST.ObjectExpression, type: Type.Object) {
   const astProps: { name: string, expr: AST.Expression, key: AST.Identifier }[] =
     ast.properties.map(prop => {
       if (!AST.isObjectProperty(prop)) bug(`unimplemented ${prop.type}`);
@@ -26,18 +27,39 @@ function checkObject(ast: AST.ObjectExpression, type: Type.Object) {
 
   astProps.forEach(({ name, expr, key }) => {
     const propType = Type.propType(type, name);
-    if (propType) check(expr, propType);
+    if (propType) check(env, expr, propType);
     else err(`extra property ${name}`, key);
   });
 }
 );
 
-const check = Trace.instrument('check',
-function check(ast: AST.Expression, type: Type) {
-  if (AST.isObjectExpression(ast) && Type.isObject(type))
-    return checkObject(ast, type);
+const checkFunction = Trace.instrument('checkFunction',
+function checkFunction(env: Env, ast: AST.ArrowFunctionExpression, type: Type.Function) {
+  if (!AST.isExpression(ast.body)) bug(`unimplemented ${ast.body.type}`)
+  if (type.args.length != ast.params.length)
+    err(`expected ${type.args.length} args, got ${ast.params.length} args`, ast);
+  const params = ast.params.map(param => {
+    if (!AST.isIdentifier(param)) bug(`unimplemented ${param.type}`);
+    return param.name;
+  });
+  const bodyEnv =
+    params.reduce(
+      (env, param, i) => env.set(param, type.args[i]),
+      env
+    );
+  check(bodyEnv, ast.body, type.ret);
+}
+);
 
-  const synthType = synth(ast);
+const check = Trace.instrument('check',
+function check(env: Env, ast: AST.Expression, type: Type) {
+  if (AST.isObjectExpression(ast) && Type.isObject(type))
+    return checkObject(env, ast, type);
+
+  if (AST.isArrowFunctionExpression(ast) && Type.isFunction(type))
+    return checkFunction(env, ast, type);
+
+  const synthType = synth(env, ast);
   if (!Type.isSubtype(synthType, type))
     err(`expected ${Type.toString(type)}, got ${Type.toString(synthType)}`, ast);
 }

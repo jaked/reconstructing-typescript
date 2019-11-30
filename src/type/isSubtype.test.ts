@@ -39,3 +39,33 @@ describe('objects', () => {
     ).toBe(false);
   });
 });
+
+describe('functions', () => {
+  it('ok', () => {
+    expectIsSubtype(
+      '(x: {}) => { foo: boolean }',
+      '(x: { bar: boolean }) => {}'
+    ).toBe(true);
+  });
+
+  it('wrong number of args', () => {
+    expectIsSubtype(
+      '(x: {}, y: boolean) => { foo: boolean }',
+      '(x: { bar: boolean }) => {}'
+    ).toBe(false);
+  });
+
+  it('incompatible arg', () => {
+    expectIsSubtype(
+      '(x: boolean) => { foo: boolean }',
+      '(x: number) => {}'
+    ).toBe(false);
+  });
+
+  it('incompatible return', () => {
+    expectIsSubtype(
+      '(x: {}) => boolean',
+      '(x: { bar: boolean }) => number'
+    ).toBe(false);
+  });
+});
