@@ -231,6 +231,23 @@ function synthUnary(env: Env, ast: AST.UnaryExpression): Type {
 }
 );
 
+const synthConditional = Trace.instrument('synthConditional',
+function synthConditional(env: Env, ast: AST.ConditionalExpression): Type {
+  const test = synth(env, ast.test);
+  return Type.map(test, Trace.instrument('...synthConditional', test => {
+    const consequent = synth(env, ast.consequent);
+    const alternate = synth(env, ast.alternate);
+
+    if (Type.isTruthy(test))
+      return consequent;
+    else if (Type.isFalsy(test))
+      return alternate;
+    else
+      return Type.union(consequent, alternate);
+  }, { ...ast, test: underscore }));
+}
+);
+
 const synth = Trace.instrument('synth',
 function synth(env: Env, ast: AST.Expression): Type {
   switch (ast.type) {
@@ -247,6 +264,7 @@ function synth(env: Env, ast: AST.Expression): Type {
     case 'BinaryExpression':        return synthBinary(env, ast);
     case 'LogicalExpression':       return synthLogical(env, ast);
     case 'UnaryExpression':         return synthUnary(env, ast);
+    case 'ConditionalExpression':   return synthConditional(env, ast);
 
     default: bug(`unimplemented ${ast.type}`);
   }

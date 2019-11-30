@@ -1,3 +1,4 @@
+import Type from '../type';
 import { Typecheck, Env } from './index';
 import * as Parse from '../ast/parse';
 
@@ -77,5 +78,16 @@ describe('function', () => {
       '(x) => x',
       '((x: number) => number) & ((x: string) => string)'
     );
+  });
+});
+
+describe('conditionals', () => {
+  it('ok', () => {
+    const env = Env({ b: Type.boolean });
+    expectCheck(
+      'b ? { foo: 7 } : { foo: 9 }',
+      '{ foo: number }',
+      env
+    )
   });
 });

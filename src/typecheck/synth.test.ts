@@ -381,3 +381,14 @@ describe('typeof', () => {
     );
   });
 });
+
+describe('conditionals', () => {
+  it('ok', () => {
+    const env = Env({ b: Type.boolean });
+    expectSynth(
+      'b ? 7 : "foo"',
+      '7 | "foo"',
+      env
+    )
+  });
+});
