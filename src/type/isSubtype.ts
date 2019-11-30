@@ -24,6 +24,13 @@ function (a: Types.Type, b: Types.Type): boolean {
       isSubtype(a.ret, b.ret);
   }
 
+  if (a.type === 'Singleton') {
+    if (b.type === 'Singleton')
+      return a.value === b.value;
+    else
+      return isSubtype(a.base, b);
+  }
+
   return false;
 }
 );

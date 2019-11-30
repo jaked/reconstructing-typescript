@@ -19,5 +19,11 @@ export default function toString(type: Type): string {
       const args = type.args.map(toString);
       return `(${args.join(', ')}) => ${toString(type.ret)}`
     }
+
+    case 'Singleton':
+      if (type.base.type === 'String')
+        return `'${type.value}'`;
+      else
+        return `${type.value}`;
   }
 }

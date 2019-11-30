@@ -13,6 +13,7 @@ module Type {
   export type String = Types.String;
   export type Object = Types.Object;
   export type Function = Types.Function;
+  export type Singleton = Types.Singleton;
 
   export type Type = Types.Type;
 
@@ -22,6 +23,7 @@ module Type {
   export const string = Constructors.string;
   export const object = Constructors.object;
   export const functionType = Constructors.functionType;
+  export const singleton = Constructors.singleton;
 
   export const isNull = Validators.isNull;
   export const isBoolean = Validators.isBoolean;

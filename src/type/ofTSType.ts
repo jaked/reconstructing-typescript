@@ -37,6 +37,13 @@ export default function ofTSType(tsType: AST.TSType): Types.Type {
       return Type.functionType(args, ret);
     }
 
+    case 'TSLiteralType':
+      switch (tsType.literal.type) {
+        case 'BooleanLiteral': return Type.singleton(tsType.literal.value);
+        case 'NumericLiteral': return Type.singleton(tsType.literal.value);
+        case 'StringLiteral': return Type.singleton(tsType.literal.value);
+      }
+
     default: bug(`unimplemented ${tsType.type}`);
   }
 }

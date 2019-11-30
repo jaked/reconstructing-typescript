@@ -21,3 +21,10 @@ it('function', () => {
     Type.functionType([Type.number], Type.string)
   );
 });
+
+it('singleton', () => {
+  expectOfTSType(
+    '7',
+    Type.singleton(7)
+  );
+});
