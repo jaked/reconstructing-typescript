@@ -8,6 +8,9 @@ import intersection from './intersection';
 
 export default function ofTSType(tsType: TSType): Types.Type {
   switch (tsType.type) {
+    case 'TSParenthesizedType':
+      return ofTSType(tsType.typeAnnotation);
+
     case 'TSNeverKeyword': return Type.never;
     case 'TSUnknownKeyword': return Type.unknown;
     case 'TSNullKeyword': return Type.nullType;
@@ -56,9 +59,6 @@ export default function ofTSType(tsType: TSType): Types.Type {
 
     case 'TSIntersectionType':
       return intersection(...tsType.types.map(ofTSType));
-
-    case 'TSParenthesizedType':
-      return ofTSType(tsType.typeAnnotation);
 
     default: throw `unimplemented ${tsType.type}`;
   }

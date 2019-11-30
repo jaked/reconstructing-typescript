@@ -7,6 +7,9 @@ import union from './union';
 
 export default function ofTSType(tsType: TSType): Types.Type {
   switch (tsType.type) {
+    case 'TSParenthesizedType':
+      return ofTSType(tsType.typeAnnotation);
+
     case 'TSNeverKeyword': return Type.never;
     case 'TSNullKeyword': return Type.nullType;
     case 'TSBooleanKeyword': return Type.boolean;
