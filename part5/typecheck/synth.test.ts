@@ -90,6 +90,18 @@ describe('function application', () => {
       env
     );
   });
+
+  it('ok union of intersection', () => {
+    const env = Env({ f: Parse.parseType(
+      '(((x: number) => number) & ((x: string) => boolean)) | ' +
+      '(((x: boolean) => number) & ((x: string) => number))'
+    ) });
+    expectSynth(
+      'f("this")',
+      'boolean | number',
+      env
+    );
+  });
 });
 
 describe('singleton', () => {

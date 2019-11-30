@@ -54,7 +54,7 @@ describe('function', () => {
   it('ok intersection', () => {
     expectCheck(
       '(x) => x',
-      '((x: number) => number) & ((x: string) => string)  '
+      '((x: number) => number) & ((x: string) => string)'
     );
   });
 });

@@ -169,11 +169,10 @@ function synthUnary(env: Env, ast: UnaryExpression): Type {
   });
 }
 
-function synthAndThen(env: Env, ast: Expression, fn: (t: Type) => Type) {
-  const type = synth(env, ast);
+function andThen(type: Type, fn: (t: Type) => Type): Type {
   switch (type.type) {
     case 'Union':
-      return Type.union(...type.types.map(fn));
+      return Type.union(...type.types.map(type => andThen(type, fn)));
 
     case 'Intersection': {
       let error: string | undefined = undefined;
@@ -196,6 +195,10 @@ function synthAndThen(env: Env, ast: Expression, fn: (t: Type) => Type) {
     default:
       return fn(type);
   }
+}
+
+function synthAndThen(env: Env, ast: Expression, fn: (t: Type) => Type): Type {
+  return andThen(synth(env, ast), fn);
 }
 
 export default function synth(env: Env, ast: Expression): Type {
