@@ -28,7 +28,6 @@ function checkObject(env: Env, ast: AST.ObjectExpression, type: Type.Object) {
   astProps.forEach(({ name, expr, key }) => {
     const propType = Type.propType(type, name);
     if (propType) check(env, expr, propType);
-    else err(`extra property ${name}`, key);
   });
 }
 );
@@ -52,7 +51,10 @@ function checkFunction(env: Env, ast: AST.ArrowFunctionExpression, type: Type.Fu
 );
 
 const check = Trace.instrument('check',
-function check(env: Env, ast: AST.Expression, type: Type) {
+function check(env: Env, ast: AST.Expression, type: Type): void {
+  if (Type.isIntersection(type))
+    return type.types.forEach(type => check(env, ast, type));
+
   if (AST.isObjectExpression(ast) && Type.isObject(type))
     return checkObject(env, ast, type);
 

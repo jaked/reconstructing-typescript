@@ -44,6 +44,17 @@ describe('property lookup', () => {
       env
     );
   });
+
+  it('ok intersection', () => {
+    const env = Env({
+      o: Parse.parseType('{ foo: string } & { bar: boolean }')
+    });
+    expectSynth(
+      'o.foo',
+      'string',
+      env
+    );
+  });
 });
 
 describe('as', () => {
@@ -99,6 +110,29 @@ describe('function application', () => {
     expectSynth(
       'f(7)',
       'string | boolean',
+      env
+    );
+  });
+
+  it('ok intersection', () => {
+    const env = Env({
+      f: Parse.parseType('((n: number) => string) & ((n: string) => boolean)')
+    });
+    expectSynth(
+      '{ foo: f(7), bar: f("baz") }',
+      '{ foo: string, bar: boolean }',
+      env
+    );
+  });
+
+  it('ok union of intersection', () => {
+    const env = Env({ f: Parse.parseType(
+      '(((x: number) => number) & ((x: string) => boolean)) | ' +
+      '(((x: boolean) => number) & ((x: string) => number))'
+    ) });
+    expectSynth(
+      'f("this")',
+      'boolean | number',
       env
     );
   });

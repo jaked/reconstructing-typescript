@@ -4,6 +4,10 @@ export function isNever(type: Types.Type): type is Types.Never {
   return type.type === 'Never';
 }
 
+export function isUnknown(type: Types.Type): type is Types.Unknown {
+  return type.type === 'Unknown';
+}
+
 export function isNull(type: Types.Type): type is Types.Null {
   return type.type === 'Null';
 }
@@ -34,4 +38,8 @@ export function isSingleton(type: Types.Type): type is Types.Singleton {
 
 export function isUnion(type: Types.Type): type is Types.Union {
   return type.type === 'Union';
+}
+
+export function isIntersection(type: Types.Type): type is Types.Intersection {
+  return type.type === 'Intersection';
 }

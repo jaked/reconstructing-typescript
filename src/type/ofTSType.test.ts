@@ -35,3 +35,13 @@ it('union', () => {
     Type.union(Type.singleton(7), Type.singleton(9))
   );
 });
+
+it('intersection', () => {
+  expectOfTSType(
+    '{ foo: 7 } & { bar: 9 }',
+    Type.intersection(
+      Type.object({ foo: Type.singleton(7) }),
+      Type.object({ bar: Type.singleton(9) })
+    )
+  );
+});

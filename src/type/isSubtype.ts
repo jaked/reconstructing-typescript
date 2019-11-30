@@ -10,6 +10,9 @@ function (a: Types.Type, b: Types.Type): boolean {
   if (Type.isUnion(a)) return a.types.every(a => isSubtype(a, b));
   if (Type.isUnion(b)) return b.types.some(b => isSubtype(a, b));
 
+  if (Type.isIntersection(a)) return a.types.some(a => isSubtype(a, b));
+  if (Type.isIntersection(b)) return b.types.every(b => isSubtype(a, b));
+
   if (Type.isNull(a) && Type.isNull(b)) return true;
   if (Type.isBoolean(a) && Type.isBoolean(b)) return true;
   if (Type.isNumber(a) && Type.isNumber(b)) return true;

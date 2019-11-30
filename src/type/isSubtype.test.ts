@@ -122,3 +122,26 @@ describe('unions', () => {
     ).toBe(false);
   });
 });
+
+describe('intersections', () => {
+  it('ok', () => {
+    expectIsSubtype(
+      "{ foo: 7, bar: 9 } & { baz: 'quux' }",
+      "{ foo: number } & { bar: number }"
+    ).toBe(true);
+  });
+
+  it('not some on left', () => {
+    expectIsSubtype(
+      "{ bar: string } & { baz: boolean }",
+      "{ foo: number }"
+    ).toBe(false);
+  })
+
+  it('not every on right', () => {
+    expectIsSubtype(
+      "{ bar: string }",
+      "{ foo: number } & { bar: string }"
+    ).toBe(false);
+  });
+});

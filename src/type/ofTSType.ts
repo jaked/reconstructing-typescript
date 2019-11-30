@@ -3,6 +3,7 @@ import { bug, err } from '../util/err';
 import * as Types from './types';
 import * as Type from './constructors';
 import union from './union';
+import intersection from './intersection';
 
 export default function ofTSType(tsType: AST.TSType): Types.Type {
   switch (tsType.type) {
@@ -10,6 +11,7 @@ export default function ofTSType(tsType: AST.TSType): Types.Type {
       return ofTSType(tsType.typeAnnotation);
 
     case 'TSNeverKeyword': return Type.never;
+    case 'TSUnknownKeyword': return Type.unknown;
     case 'TSNullKeyword': return Type.nullType;
     case 'TSBooleanKeyword': return Type.boolean;
     case 'TSNumberKeyword': return Type.number;
@@ -52,6 +54,9 @@ export default function ofTSType(tsType: AST.TSType): Types.Type {
 
     case 'TSUnionType':
       return union(...tsType.types.map(ofTSType));
+
+    case 'TSIntersectionType':
+      return intersection(...tsType.types.map(ofTSType));
 
     default: bug(`unimplemented ${tsType.type}`);
   }

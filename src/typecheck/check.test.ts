@@ -25,6 +25,13 @@ describe('object', () => {
     );
   });
 
+  it('ok intersection', () => {
+    expectCheck(
+      '{ foo: 1, bar: true }',
+      '{ foo: number } & { bar: boolean }'
+    );
+  });
+
   it('ok with permuted properties', () => {
     expectCheck(
       '{ foo: 1, bar: true }',
@@ -37,14 +44,6 @@ describe('object', () => {
       '{ foo: 1 }',
       '{ bar: boolean, foo: number }',
       'at {'
-    );
-  });
-
-  it('throws with extra property', () => {
-    expectCheckToThrow(
-      '{ foo: 1, bar: true, baz: "quux" }',
-      '{ bar: boolean, foo: number }',
-      'at baz'
     );
   });
 });
@@ -70,6 +69,13 @@ describe('function', () => {
       '(x) => true',
       '(x: number) => number',
       'at true'
+      );
+    });
+
+  it('ok intersection', () => {
+    expectCheck(
+      '(x) => x',
+      '((x: number) => number) & ((x: string) => string)'
     );
   });
 });

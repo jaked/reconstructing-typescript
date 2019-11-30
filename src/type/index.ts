@@ -2,6 +2,7 @@ import * as Types from './types';
 import * as Constructors from './constructors';
 import * as Validators from './validators';
 import Union from './union';
+import Intersection from './intersection';
 import IsSubtype from './isSubtype';
 import ToString from './toString';
 import OfTSType from './ofTSType';
@@ -11,6 +12,7 @@ import Map from './map';
 
 module Type {
   export type Never = Types.Never;
+  export type Unknown = Types.Unknown;
   export type Null = Types.Null;
   export type Boolean = Types.Boolean;
   export type Number = Types.Number;
@@ -19,10 +21,12 @@ module Type {
   export type Function = Types.Function;
   export type Singleton = Types.Singleton;
   export type Union = Types.Union;
+  export type Intersection = Types.Intersection;
 
   export type Type = Types.Type;
 
   export const never = Constructors.never;
+  export const unknown = Constructors.unknown;
   export const nullType = Constructors.nullType;
   export const boolean = Constructors.boolean;
   export const number = Constructors.number;
@@ -31,8 +35,10 @@ module Type {
   export const functionType = Constructors.functionType;
   export const singleton = Constructors.singleton;
   export const union = Union;
+  export const intersection = Intersection;
 
   export const isNever = Validators.isNever;
+  export const isUnknown = Validators.isUnknown;
   export const isNull = Validators.isNull;
   export const isBoolean = Validators.isBoolean;
   export const isNumber = Validators.isNumber;
@@ -41,6 +47,7 @@ module Type {
   export const isFunction = Validators.isFunction;
   export const isSingleton = Validators.isSingleton;
   export const isUnion = Validators.isUnion;
+  export const isIntersection = Validators.isIntersection;
 
   export const isSubtype = IsSubtype;
   export const map = Map;

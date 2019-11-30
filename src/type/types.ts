@@ -1,5 +1,6 @@
 export type Type =
   Never |
+  Unknown |
   Null |
   Boolean |
   Number |
@@ -7,10 +8,15 @@ export type Type =
   Object |
   Function |
   Singleton |
-  Union;
+  Union |
+  Intersection;
 
 export type Never = {
   type: 'Never';
+}
+
+export type Unknown = {
+  type: 'Unknown';
 }
 
 export type Null = {
@@ -48,5 +54,10 @@ export type Singleton = {
 
 export type Union = {
   type: 'Union';
+  types: Type[];
+}
+
+export type Intersection = {
+  type: 'Intersection';
   types: Type[];
 }

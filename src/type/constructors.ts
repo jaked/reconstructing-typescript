@@ -1,6 +1,7 @@
 import * as Types from './types';
 
 export const never: Types.Never = { type: 'Never' };
+export const unknown: Types.Unknown = { type: 'Unknown' };
 
 export const nullType: Types.Null = { type: 'Null' };
 export const boolean: Types.Boolean = { type: 'Boolean' };
