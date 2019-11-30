@@ -1,6 +1,7 @@
 import {
   TSType
 } from '@babel/types';
+import { assert, bug, ensure } from '../util/err';
 import * as Types from './types';
 import * as Type from './constructors';
 
@@ -15,9 +16,9 @@ export default function ofTSType(tsType: TSType): Types.Type {
       const props =
         tsType.members.reduce<{ [name: string]: Types.Type }>(
           (obj, mem) => {
-            if (mem.type !== 'TSPropertySignature') throw `unimplemented ${mem.type}`;
-            if (mem.key.type !== 'Identifier') throw `unimplemented ${mem.key.type}`;
-            if (!mem.typeAnnotation) throw `type required for ${mem.key.name}`;
+            assert(mem.type === 'TSPropertySignature', `unimplemented ${mem.type}`);
+            assert(mem.key.type === 'Identifier', `unimplemented ${mem.key.type}`);
+            ensure(mem.typeAnnotation, `type required for ${mem.key.name}`, mem);
             const type = ofTSType(mem.typeAnnotation.typeAnnotation);
             return Object.assign(obj, { [mem.key.name]: type });
           },
@@ -26,6 +27,6 @@ export default function ofTSType(tsType: TSType): Types.Type {
       return Type.object(props);
     }
 
-    default: throw `unimplemented ${tsType.type}`;
+    default: bug(`unimplemented ${tsType.type}`);
   }
 }

@@ -7,6 +7,7 @@ import {
   ObjectExpression,
   StringLiteral
 } from '@babel/types';
+import { assert, bug, ensure } from '../util/err';
 import Type from '../type';
 
 function synthNull(ast: NullLiteral): Type {
@@ -29,9 +30,9 @@ function synthObject(ast: ObjectExpression): Type {
   const fields =
     ast.properties.reduce<{ [n: string]: Type.Type }>(
       (obj, prop) => {
-        if (prop.type !== 'ObjectProperty') throw `unimplemented ${prop.type}`;
+        assert(prop.type === 'ObjectProperty', `unimplemented ${prop.type}`);
         const key = prop.key as Expression;
-        if (key.type !== 'Identifier') throw `unimplemented ${key.type}`;
+        assert(key.type === 'Identifier', `unimplemented ${key.type}`);
         const expr = prop.value as Expression;
         return Object.assign(obj, { [key.name]: synth(expr) })
       },
@@ -41,13 +42,13 @@ function synthObject(ast: ObjectExpression): Type {
 }
 
 function synthMember(ast: MemberExpression): Type {
-  if (ast.computed) throw `unimplemented computed`;
+  assert(!ast.computed, `unimplemented computed`);
   const property = ast.property as Expression;
-  if (property.type !== 'Identifier') throw `unimplemented ${property.type}`;
+  assert(property.type === 'Identifier', `unimplemented ${property.type}`);
   const object = synth(ast.object);
-  if (object.type !== 'Object') throw '. expects object';
+  ensure(object.type === 'Object', '. expects object', ast.object);
   const type = object.properties[property.name];
-  if (!type) throw `no such property ${property.name}`;
+  ensure(type, `no such property ${property.name}`, property);
   return type;
 }
 
@@ -60,6 +61,6 @@ export default function synth(ast: Expression): Type {
     case 'ObjectExpression':        return synthObject(ast);
     case 'MemberExpression':        return synthMember(ast);
 
-    default: throw `unimplemented ${ast.type}`;
+    default: bug(`unimplemented ${ast.type}`);
   }
 }

@@ -1,4 +1,4 @@
-import * as Parse from '../parse';
+import * as Parse from '../ast/parse';
 import synth from './synth';
 
 function expectSynth(expr: string, type: string) {

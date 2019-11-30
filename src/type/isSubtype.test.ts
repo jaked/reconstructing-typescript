@@ -1,4 +1,4 @@
-import * as Parse from '../parse'
+import * as Parse from '../ast/parse'
 import Type from './index';
 
 function expectIsSubtype(a: string, b: string) {

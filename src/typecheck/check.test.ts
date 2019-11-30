@@ -1,5 +1,5 @@
 import Typecheck from './index';
-import * as Parse from '../parse';
+import * as Parse from '../ast/parse';
 
 function expectCheck(expr: string, type: string) {
   const exprAst = Parse.parseExpression(expr);
@@ -7,10 +7,10 @@ function expectCheck(expr: string, type: string) {
   expect(() => Typecheck.check(exprAst, typeAst)).not.toThrow();
 }
 
-function expectCheckToThrow(expr: string, type: string) {
+function expectCheckToThrow(expr: string, type: string, msg?: string) {
   const exprAst = Parse.parseExpression(expr);
   const typeAst = Parse.parseType(type);
-  expect(() => Typecheck.check(exprAst, typeAst)).toThrow();
+  expect(() => Typecheck.check(exprAst, typeAst)).toThrow(msg);
 }
 
 describe('object', () => {
@@ -31,14 +31,16 @@ describe('object', () => {
   it('throws with missing property', () => {
     expectCheckToThrow(
       '{ foo: 1 }',
-      '{ bar: boolean, foo: number }'
+      '{ bar: boolean, foo: number }',
+      'at {'
     );
   });
 
   it('throws with extra property', () => {
     expectCheckToThrow(
       '{ foo: 1, bar: true, baz: "quux" }',
-      '{ bar: boolean, foo: number }'
+      '{ bar: boolean, foo: number }',
+      'at baz'
     );
   });
 });
