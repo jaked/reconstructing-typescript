@@ -3,6 +3,7 @@ import {
   BinaryExpression,
   BooleanLiteral,
   CallExpression,
+  ConditionalExpression,
   Expression,
   Identifier,
   LogicalExpression,
@@ -169,12 +170,50 @@ function synthUnary(env: Env, ast: UnaryExpression): Type {
   });
 }
 
-function synthAndThen(env: Env, ast: Expression, fn: (t: Type) => Type) {
-  const type = synth(env, ast);
-  if (type.type === 'Union')
-    return Type.union(...type.types.map(fn));
-  else
-    return fn(type);
+function synthConditional(env: Env, ast: ConditionalExpression): Type {
+  return synthAndThen(env, ast.test, test => {
+    const consequent = synth(env, ast.consequent);
+    const alternate = synth(env, ast.alternate);
+
+    if (isTruthyType(test))
+      return consequent;
+    else if (isFalsyType(test))
+      return alternate;
+    else
+      return Type.union(consequent, alternate);
+  });
+}
+
+function andThen(type: Type, fn: (t: Type) => Type): Type {
+  switch (type.type) {
+    case 'Union':
+      return Type.union(...type.types.map(type => andThen(type, fn)));
+
+    case 'Intersection': {
+      let error: string | undefined = undefined;
+      const intersection =
+        Type.intersection(...type.types.map(type => {
+          try { return fn(type); }
+          catch (e) {
+            if (!error) error = e;
+            return Type.unknown;
+          }
+        }));
+      if (intersection.type === 'Unknown') {
+        if (!error) throw 'expected defined error';
+        throw error;
+      } else {
+        return intersection;
+      }
+    }
+
+    default:
+      return fn(type);
+  }
+}
+
+function synthAndThen(env: Env, ast: Expression, fn: (t: Type) => Type): Type {
+  return andThen(synth(env, ast), fn);
 }
 
 export default function synth(env: Env, ast: Expression): Type {
@@ -191,6 +230,7 @@ export default function synth(env: Env, ast: Expression): Type {
     case 'BinaryExpression':        return synthBinary(env, ast);
     case 'LogicalExpression':       return synthLogical(env, ast);
     case 'UnaryExpression':         return synthUnary(env, ast);
+    case 'ConditionalExpression':   return synthConditional(env, ast);
 
     default: throw `unimplemented ${ast.type}`;
   }

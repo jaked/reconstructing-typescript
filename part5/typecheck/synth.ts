@@ -161,11 +161,11 @@ function synthUnary(env: Env, ast: UnaryExpression): Type {
   return synthAndThen(env, ast.argument, argument => {
 
     if (isTruthyType(argument))
-    return Type.singleton(false);
-  else if (isFalsyType(argument))
-    return Type.singleton(true);
-  else
-    return Type.boolean;
+      return Type.singleton(false);
+    else if (isFalsyType(argument))
+      return Type.singleton(true);
+    else
+      return Type.boolean;
   });
 }
 
