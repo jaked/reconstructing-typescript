@@ -27,3 +27,7 @@ export function singleton(value: boolean | number | string): Types.Singleton {
     case 'string': return { type: 'Singleton', base: string, value };
   }
 }
+
+export function not(base: Types.Type): Types.Not {
+  return { type: 'Not', base };
+}

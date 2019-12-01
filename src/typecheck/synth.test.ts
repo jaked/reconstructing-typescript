@@ -232,7 +232,7 @@ describe('logical and', () => {
     const env = Env({ x: Type.number, y: Type.string })
     expectSynth(
       'x && y',
-      'number | string',
+      '0 | string',
       env
     );
   });
@@ -262,9 +262,18 @@ describe('logical and', () => {
     });
     expectSynth(
       'x && y',
-      'boolean | string | 9',
+      'false | string | 9',
       env
     );
+  });
+
+  it('narrows', () => {
+    const env = Env({ x: Parse.parseType('number | string') });
+    expectSynth(
+      `typeof(x) === 'number' && x + 1`,
+      `number | false`,
+      env
+    )
   });
 });
 
@@ -303,9 +312,18 @@ describe('logical or', () => {
     });
     expectSynth(
       'x || y',
-      'boolean | string | 7',
+      'true | string | 7',
       env
     );
+  });
+
+  it('narrows', () => {
+    const env = Env({ x: Parse.parseType('number | string') });
+    expectSynth(
+      `typeof(x) === 'string' || x + 1`,
+      `number | true`,
+      env
+    )
   });
 });
 
@@ -390,5 +408,15 @@ describe('conditionals', () => {
       '7 | "foo"',
       env
     )
+  });
+
+  it('narrows true', () => {
+    const env = Env({ s: Parse.parseType(`'foo' | 'bar'`) });
+    expectSynth(`s === 'foo' ? s : 'foo'`, `'foo'`, env);
+  });
+
+  it('narrows false', () => {
+    const env = Env({ s: Parse.parseType(`'foo' | 'bar'`) });
+    expectSynth(`s === 'foo' ? 'bar' : s`, `"bar"`, env);
   });
 });

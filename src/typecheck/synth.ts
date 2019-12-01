@@ -4,6 +4,7 @@ import * as Trace from '../util/trace';
 import Type from '../type';
 import check from './check';
 import Env from './env';
+import { narrow, narrowType } from './narrow';
 
 const underscore = AST.identifier('_');
 
@@ -166,7 +167,7 @@ function synthBinary(env: Env, ast: AST.BinaryExpression): Type {
 const synthLogical = Trace.instrument('synthLogical',
 function synthLogical(env: Env, ast: AST.LogicalExpression): Type {
   const left = synth(env, ast.left);
-  const right = synth(env, ast.right);
+  const right = synth(narrow(env, ast.left, ast.operator === '&&'), ast.right);
   return Type.map(left, right, Trace.instrument('...synthLogical', (left: Type, right: Type) => {
     switch (ast.operator) {
       case '&&':
@@ -175,7 +176,7 @@ function synthLogical(env: Env, ast: AST.LogicalExpression): Type {
         else if (Type.isTruthy(left))
           return right;
         else
-          return Type.union(left, right);
+          return Type.union(narrowType(left, Type.falsy), right);
 
       case '||':
         if (Type.isTruthy(left))
@@ -183,7 +184,7 @@ function synthLogical(env: Env, ast: AST.LogicalExpression): Type {
         else if (Type.isFalsy(left))
           return right;
         else
-          return Type.union(left, right);
+          return Type.union(narrowType(left, Type.truthy), right);
 
       default: bug(`unimplemented ${ast.operator}`);
     }
@@ -234,17 +235,16 @@ function synthUnary(env: Env, ast: AST.UnaryExpression): Type {
 const synthConditional = Trace.instrument('synthConditional',
 function synthConditional(env: Env, ast: AST.ConditionalExpression): Type {
   const test = synth(env, ast.test);
+  const consequent = synth(narrow(env, ast.test, true), ast.consequent);
+  const alternate = synth(narrow(env, ast.test, false), ast.alternate);
   return Type.map(test, Trace.instrument('...synthConditional', test => {
-    const consequent = synth(env, ast.consequent);
-    const alternate = synth(env, ast.alternate);
-
     if (Type.isTruthy(test))
       return consequent;
     else if (Type.isFalsy(test))
       return alternate;
     else
       return Type.union(consequent, alternate);
-  }, { ...ast, test: underscore }));
+  }, { ...ast, test: underscore, consequent: underscore, alternate: underscore }));
 }
 );
 

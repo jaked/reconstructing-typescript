@@ -1,5 +1,6 @@
 import { Type } from './types';
 import { isFunction, isString } from './validators';
+import { bug } from '../util/err'
 
 export default function toString(type: Type): string {
   switch (type.type) {
@@ -50,5 +51,7 @@ export default function toString(type: Type): string {
             return typeString;
         })
         .join(' & ');
+
+    default: bug(`unexpected ${type.type}`);
   }
 }

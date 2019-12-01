@@ -9,7 +9,8 @@ export type Type =
   Function |
   Singleton |
   Union |
-  Intersection;
+  Intersection |
+  Not;
 
 export type Never = {
   type: 'Never';
@@ -60,4 +61,9 @@ export type Union = {
 export type Intersection = {
   type: 'Intersection';
   types: Type[];
+}
+
+export type Not = {
+  type: 'Not';
+  base: Type;
 }

@@ -22,6 +22,7 @@ module Type {
   export type Singleton = Types.Singleton;
   export type Union = Types.Union;
   export type Intersection = Types.Intersection;
+  export type Not = Types.Not;
 
   export type Type = Types.Type;
 
@@ -37,6 +38,7 @@ module Type {
   export const union = Union.union;
   export const distributeUnion = Union.distributeUnion;
   export const intersection = Intersection;
+  export const not = Constructors.not;
 
   export const isNever = Validators.isNever;
   export const isUnknown = Validators.isUnknown;
@@ -58,6 +60,8 @@ module Type {
   export const propType = PropType;
   export const isTruthy = Truthiness.isTruthy;
   export const isFalsy = Truthiness.isFalsy;
+  export const truthy = Truthiness.truthy;
+  export const falsy = Truthiness.falsy;
 }
 
 type Type = Type.Type;
