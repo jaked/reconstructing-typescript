@@ -80,6 +80,13 @@ describe('function', () => {
       'at x'
     );
   });
+
+  it('ok intersection', () => {
+    expectSynth(
+      '(x: number | string) => x',
+      '((x: number) => number) & ((x: string) => string)'
+    );
+  });
 });
 
 describe('function application', () => {

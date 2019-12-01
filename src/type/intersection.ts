@@ -1,7 +1,7 @@
 import { Type } from './types';
 import isSubtype from './isSubtype';
 import { unknown, never } from './constructors';
-import union from './union';
+import { union, distributeUnion } from './union';
 
 function collapseRedundant(xs: Array<Type>): Array<Type> {
   let accum: Array<Type> = [];
@@ -41,27 +41,10 @@ function flatten(types: Array<Type>): Array<Type> {
   return accum;
 }
 
-function distributeUnion(xs: Array<Type>): Type {
-  function dist(prefix: Array<Type>, suffix: Array<Type>, accum: Array<Type>): void {
-    if (suffix.length === 0) {
-      accum.push(intersection(...prefix));
-    } else if (suffix[0].type === 'Union') {
-      const suffix2 = suffix.slice(1);
-      return suffix[0].types.forEach(y => dist([...prefix, y], suffix2, accum))
-    } else {
-      dist([...prefix, suffix[0]], suffix.slice(1), accum);
-    }
-  }
-
-  const accum: Array<Type> = [];
-  dist([], xs, accum);
-  return union(...accum);
-}
-
 export default function intersection(...types: Array<Type>): Type {
   types = flatten(types);
   if (types.some(t => t.type === 'Union'))
-    return distributeUnion(types);
+    return union(...distributeUnion(types).map(ts => intersection(...ts)));
   if (types.some(t => types.some(u => emptyIntersection(t, u))))
     return never;
   types = collapseRedundant(types);

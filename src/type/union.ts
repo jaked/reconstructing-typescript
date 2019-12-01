@@ -24,7 +24,24 @@ function flatten(ts: Type[]): Type[] {
 }
 );
 
-const union = Trace.instrument('union',
+export function distributeUnion(xs: Type[]): Type[][] {
+  function dist(prefix: Type[], suffix: Type[], accum: Type[][]): void {
+    if (suffix.length === 0) {
+      accum.push(prefix);
+    } else if (suffix[0].type === 'Union') {
+      const suffix2 = suffix.slice(1);
+      return suffix[0].types.forEach(y => dist([...prefix, y], suffix2, accum))
+    } else {
+      dist([...prefix, suffix[0]], suffix.slice(1), accum);
+    }
+  }
+
+  const accum: Type[][] = [];
+  dist([], xs, accum);
+  return accum;
+}
+
+export const union = Trace.instrument('union',
 function union(...types: Type[]): Type {
   types = flatten(types);
   types = collapseSubtypes(types);

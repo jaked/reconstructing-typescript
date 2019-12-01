@@ -1,7 +1,7 @@
 import * as Types from './types';
 import * as Constructors from './constructors';
 import * as Validators from './validators';
-import Union from './union';
+import * as Union from './union';
 import Intersection from './intersection';
 import IsSubtype from './isSubtype';
 import ToString from './toString';
@@ -34,7 +34,8 @@ module Type {
   export const object = Constructors.object;
   export const functionType = Constructors.functionType;
   export const singleton = Constructors.singleton;
-  export const union = Union;
+  export const union = Union.union;
+  export const distributeUnion = Union.distributeUnion;
   export const intersection = Intersection;
 
   export const isNever = Validators.isNever;

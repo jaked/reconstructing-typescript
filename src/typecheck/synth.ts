@@ -81,7 +81,8 @@ function synthTSAs(env: Env, ast: AST.TSAsExpression): Type {
 
 const synthFunction = Trace.instrument('synthFunction',
 function synthFunction(env: Env, ast: AST.ArrowFunctionExpression): Type {
-  if (!AST.isExpression(ast.body)) bug(`unimplemented ${ast.body.type}`)
+  const body = ast.body;
+  if (!AST.isExpression(body)) bug(`unimplemented ${body.type}`)
   const bindings = ast.params.map(param => {
     if (!AST.isIdentifier(param)) bug(`unimplemented ${param.type}`);
     if (!param.typeAnnotation) err(`type required for '${param.name}'`, param);
@@ -92,13 +93,17 @@ function synthFunction(env: Env, ast: AST.ArrowFunctionExpression): Type {
     };
   });
   const args = bindings.map(({ type }) => type);
-  const bodyEnv =
-    bindings.reduce(
-      (env, { name, type }) => env.set(name, type),
-      env
-    );
-  const ret = synth(bodyEnv, ast.body);
-  return Type.functionType(args, ret);
+  const argsLists = Type.distributeUnion(args);
+  const funcTypes = argsLists.map(args => {
+    const bodyEnv =
+      bindings.reduce(
+        (env, { name, type }) => env.set(name, type),
+        env
+      );
+    const ret = synth(bodyEnv, body);
+    return Type.functionType(args, ret);
+  })
+  return Type.intersection(...funcTypes);
 }
 );
 
