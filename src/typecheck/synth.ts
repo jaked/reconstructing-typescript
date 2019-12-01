@@ -132,7 +132,7 @@ function synthBinary(env: Env, ast: AST.BinaryExpression): Type {
     }
 
   } else {
-    if (left.type === 'Number' && right.type == 'Number')
+    if (Type.isSubtype(left, Type.number) && Type.isSubtype(right, Type.number))
       return Type.number;
     else
       err('+ expects numbers', ast);

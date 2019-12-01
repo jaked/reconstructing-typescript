@@ -108,6 +108,15 @@ describe('addition', () => {
       env
     );
   });
+
+  it('ok mixed', () => {
+    const env = Env({ x: Type.number, y: Type.singleton(9) });
+    expectSynth(
+      'x + y',
+      'number',
+      env
+    );
+  });
 });
 
 describe('logical and', () => {
