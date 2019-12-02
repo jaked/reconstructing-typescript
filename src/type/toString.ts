@@ -9,7 +9,9 @@ export default function toString(type: Type): string {
 
     case 'Object': {
       const props =
-        Object.entries(type.properties).map(([ name, type ]) => `${name}: ${toString(type)}`);
+        Object.entries(type.properties).map(([ name, type ]) =>
+          `${name}: ${toString(type)}`
+        );
       return `{ ${props.join(', ')} }`;
     }
   }

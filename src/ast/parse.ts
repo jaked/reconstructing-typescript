@@ -1,6 +1,4 @@
-import {
-  Expression
-} from '@babel/types';
+import { Expression } from '@babel/types';
 import * as Babel from '@babel/parser';
 import { assert } from '../util/err';
 import Type from '../type';

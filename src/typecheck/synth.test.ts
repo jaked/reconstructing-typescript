@@ -1,10 +1,10 @@
 import * as Parse from '../ast/parse';
-import synth from './synth';
+import Typecheck from './index';
 
 function expectSynth(expr: string, type: string) {
   const exprAst = Parse.parseExpression(expr);
   const typeAst = Parse.parseType(type);
-  expect(synth(exprAst)).toEqual(typeAst);
+  expect(Typecheck.synth(exprAst)).toEqual(typeAst);
 }
 
 describe('object', () => {
