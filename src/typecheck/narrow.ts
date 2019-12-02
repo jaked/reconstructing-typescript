@@ -186,13 +186,27 @@ function narrowLogical(
       if (assume) {
         env = narrow(env, ast.left, true);
         return narrow(env, ast.right, true);
-      } else return env;
+      } else {
+        if (Type.isTruthy(synth(env, ast.left)))
+          return narrow(env, ast.right, false);
+        else if (Type.isTruthy(synth(env, ast.right)))
+          return narrow(env, ast.left, false);
+        else
+          return env;
+      }
 
     case '||':
       if (!assume) {
         env = narrow(env, ast.left, false);
         return narrow(env, ast.right, false);
-      } else return env;
+      } else {
+        if (Type.isFalsy(synth(env, ast.left)))
+          return narrow(env, ast.right, true);
+        else if (Type.isFalsy(synth(env, ast.right)))
+          return narrow(env, ast.left, true);
+        else
+          return env;
+      }
 
     default: bug(`unexpected AST ${ast.operator}`);
   }

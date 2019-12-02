@@ -49,21 +49,61 @@ describe('narrow', () => {
     );
   });
 
-  it('and', () => {
-    expectNarrow(
-      `0 | 1 | 2`,
-      `x && x !== 1`,
-      `2`,
-      `0 | 1 | 2`
-    );
+  describe('and', () => {
+    it('assume true narrows on both sides', () => {
+      expectNarrow(
+        `0 | 1 | 2`,
+        `x && x !== 1`,
+        `2`,
+        `0 | 1 | 2`
+      );
+    });
+
+    it('assume false but left true narrows on right', () => {
+      expectNarrow(
+        `0 | 1 | 2`,
+        `true && x !== 1`,
+        `0 | 2`,
+        `1`
+      );
+    });
+
+    it('assume false but right true narrows on left', () => {
+      expectNarrow(
+        `0 | 1 | 2`,
+        `x && true`,
+        `1 | 2`,
+        `0`
+      );
+    });
   });
 
-  it('or', () => {
-    expectNarrow(
-      `0 | 1 | 2`,
-      `x || x !== 1`,
-      `0 | 1 | 2`,
-      `never`
-    );
+  describe('or', () => {
+    it('assume false narrows on both sides', () => {
+      expectNarrow(
+        `0 | 1 | 2`,
+        `x || x !== 1`,
+        `0 | 1 | 2`,
+        `never`
+      );
+    });
+
+    it('assume true but left false narrows on right', () => {
+      expectNarrow(
+        `0 | 1 | 2`,
+        `false || x !== 1`,
+        `0 | 2`,
+        `1`
+      );
+    });
+
+    it('assume true but right false narrows on left', () => {
+      expectNarrow(
+        `0 | 1 | 2`,
+        `x || false`,
+        `1 | 2`,
+        `0`
+      );
+    });
   });
 });
