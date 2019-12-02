@@ -5,6 +5,7 @@ import IsSubtype from './isSubtype';
 import ToString from './toString';
 import OfTSType from './ofTSType';
 import PropType from './propType';
+import * as Truthiness from './truthiness';
 
 module Type {
   export type Null = Types.Null;
@@ -37,6 +38,8 @@ module Type {
   export const ofTSType = OfTSType;
 
   export const propType = PropType;
+  export const isTruthy = Truthiness.isTruthy;
+  export const isFalsy = Truthiness.isFalsy;
 }
 
 type Type = Type.Type;

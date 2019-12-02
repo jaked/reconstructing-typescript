@@ -140,23 +140,6 @@ function synthBinary(env: Env, ast: AST.BinaryExpression): Type {
 }
 );
 
-function isTruthyType(type: Type) {
-  switch (type.type) {
-    case 'Object': return true;
-    case 'Function': return true;
-    case 'Singleton': return type.value;
-    default: return false;
-  }
-}
-
-function isFalsyType(type: Type) {
-  switch (type.type) {
-    case 'Null': return true;
-    case 'Singleton': return !type.value;
-    default: return false;
-  }
-}
-
 const synthLogical = Trace.instrument('synthLogical',
 function synthLogical(env: Env, ast: AST.LogicalExpression): Type {
   assert(ast.operator === '&&', `unimplemented ${ast.operator}`);
@@ -164,9 +147,9 @@ function synthLogical(env: Env, ast: AST.LogicalExpression): Type {
   const left = synth(env, ast.left);
   const right = synth(env, ast.right);
 
-  if (isFalsyType(left))
+  if (Type.isFalsy(left))
     return left;
-  else if (isTruthyType(left))
+  else if (Type.isTruthy(left))
     return right;
   else
     return Type.boolean; // should be union
@@ -179,9 +162,9 @@ function synthUnary(env: Env, ast: AST.UnaryExpression): Type {
 
   const argument = synth(env, ast.argument);
 
-  if (isTruthyType(argument))
+  if (Type.isTruthy(argument))
     return Type.singleton(false);
-  else if (isFalsyType(argument))
+  else if (Type.isFalsy(argument))
     return Type.singleton(true);
   else
     return Type.boolean;

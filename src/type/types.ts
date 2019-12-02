@@ -34,25 +34,16 @@ export type Function = {
   ret: Type;
 }
 
-export type SingletonBoolean = {
+export type Singleton = {
   type: 'Singleton';
   base: Boolean;
   value: boolean;
-}
-
-export type SingletonNumber = {
+} | {
   type: 'Singleton';
   base: Number;
   value: number;
-}
-
-export type SingletonString = {
+} | {
   type: 'Singleton';
   base: String;
   value: string;
 }
-
-export type Singleton =
-  SingletonBoolean |
-  SingletonNumber |
-  SingletonString;

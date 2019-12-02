@@ -17,9 +17,6 @@ export function functionType(args: Types.Type[], ret: Types.Type): Types.Functio
   return { type: 'Function', args, ret };
 }
 
-export function singleton(value: boolean): Types.SingletonBoolean
-export function singleton(value: number): Types.SingletonNumber
-export function singleton(value: string): Types.SingletonString
 export function singleton(value: boolean | number | string): Types.Singleton {
   switch (typeof value) {
     case 'boolean': return { type: 'Singleton', base: boolean, value };
