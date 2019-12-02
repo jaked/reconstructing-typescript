@@ -6,6 +6,7 @@ import * as Type from './validators';
 const isSubtype = Trace.instrument('isSubtype',
 function (a: Types.Type, b: Types.Type): boolean {
   if (Type.isNever(a)) return true;
+  if (Type.isUnknown(b)) return true;
 
   if (Type.isUnion(a)) return a.types.every(a => isSubtype(a, b));
   if (Type.isUnion(b)) return b.types.some(b => isSubtype(a, b));

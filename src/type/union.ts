@@ -28,7 +28,7 @@ export function distributeUnion(xs: Type[]): Type[][] {
   function dist(prefix: Type[], suffix: Type[], accum: Type[][]): void {
     if (suffix.length === 0) {
       accum.push(prefix);
-    } else if (suffix[0].type === 'Union') {
+    } else if (isUnion(suffix[0])) {
       const suffix2 = suffix.slice(1);
       return suffix[0].types.forEach(y => dist([...prefix, y], suffix2, accum))
     } else {

@@ -44,7 +44,7 @@ export default function toString(type: Type): string {
       return type.types
         .map(type => {
           const typeString = toString(type);
-          if (type.type === 'Function' || type.type === 'Union')
+          if (isFunction(type))
             return `(${typeString})`
           else
             return typeString;

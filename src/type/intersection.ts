@@ -1,6 +1,7 @@
 import { Type } from './types';
 import isSubtype from './isSubtype';
 import { unknown, never } from './constructors';
+import { isBoolean, isIntersection, isNever, isNumber, isSingleton, isString, isUnknown, isUnion } from './validators';
 import { union, distributeUnion } from './union';
 
 function collapseRedundant(xs: Array<Type>): Array<Type> {
@@ -16,18 +17,16 @@ function collapseRedundant(xs: Array<Type>): Array<Type> {
 }
 
 function isPrimitive(type: Type) {
-  return type.type === 'Boolean' ||
-    type.type == 'Number' ||
-    type.type === 'String';
+  return isBoolean(type) || isNumber(type) || isString(type);
 }
 
 // only for primitives / singletons
 export function emptyIntersection(x: Type, y: Type): boolean {
-  if (x.type === 'Never' || y.type === 'Never') return true;
-  if (x.type === 'Unknown' || y.type === 'Unknown') return false;
-  if (x.type === 'Singleton' && y.type === 'Singleton') return x.value != y.value;
-  if (x.type === 'Singleton') return x.base.type !== y.type;
-  if (y.type === 'Singleton') return y.base.type !== x.type;
+  if (isNever(x) || isNever(y)) return true;
+  if (isUnknown(x) || isUnknown(y)) return false;
+  if (isSingleton(x) && isSingleton(y)) return x.value != y.value;
+  if (isSingleton(x)) return x.base.type !== y.type;
+  if (isSingleton(y)) return y.base.type !== x.type;
   if ((isPrimitive(x) || isPrimitive(y)) && x.type !== y.type) return true;
   return false;
 }
@@ -35,7 +34,7 @@ export function emptyIntersection(x: Type, y: Type): boolean {
 function flatten(types: Array<Type>): Array<Type> {
   const accum: Array<Type> = [];
   types.forEach(t => {
-    if (t.type === 'Intersection') accum.push(...t.types) // t already flattened
+    if (isIntersection(t)) accum.push(...t.types) // t already flattened
     else accum.push(t);
   });
   return accum;
@@ -43,7 +42,7 @@ function flatten(types: Array<Type>): Array<Type> {
 
 export default function intersection(...types: Array<Type>): Type {
   types = flatten(types);
-  if (types.some(t => t.type === 'Union'))
+  if (types.some(isUnion))
     return union(...distributeUnion(types).map(ts => intersection(...ts)));
   if (types.some(t => types.some(u => emptyIntersection(t, u))))
     return never;
