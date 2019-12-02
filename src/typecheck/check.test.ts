@@ -56,4 +56,20 @@ describe('function', () => {
       '(x: number) => number'
     );
   });
+
+  it('wrong number of args', () => {
+    expectCheckToThrow(
+      '(x, y) => x',
+      '(x: number) => number',
+      'at ('
+    );
+  });
+
+  it('incompatible return', () => {
+    expectCheckToThrow(
+      '(x) => true',
+      '(x: number) => number',
+      'at true'
+    );
+  });
 });

@@ -8,6 +8,11 @@ function expectSynth(expr: string, type: string, env: Env = Env.empty) {
   expect(Typecheck.synth(env, exprAst)).toEqual(typeAst);
 }
 
+function expectSynthToThrow(expr: string, msg?: string, env: Env = Env.empty) {
+  const exprAst = Parse.parseExpression(expr);
+  expect(() => Typecheck.synth(env, exprAst)).toThrow(msg);
+}
+
 describe('object', () => {
   it('ok', () => {
     expectSynth(
@@ -42,6 +47,13 @@ describe('function', () => {
       '(x: number) => number'
     );
   });
+
+  it('missing param type', () => {
+    expectSynthToThrow(
+      '(x) => x',
+      'at x'
+    );
+  });
 });
 
 describe('function application', () => {
@@ -52,6 +64,14 @@ describe('function application', () => {
     expectSynth(
       'f(7)',
       'string',
+      env
+    );
+  });
+
+  it('wrong arg type', () => {
+    expectSynthToThrow(
+      'f(false)',
+      'at false',
       env
     );
   });

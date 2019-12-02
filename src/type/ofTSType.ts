@@ -15,7 +15,7 @@ export default function ofTSType(tsType: AST.TSType): Types.Type {
         tsType.members.map(mem => {
           if (!AST.isTSPropertySignature(mem)) bug(`unimplemented ${mem.type}`);
           if (!AST.isIdentifier(mem.key)) bug(`unimplemented ${mem.key.type}`);
-          if (!mem.typeAnnotation) err(`type required for ${mem.key.name}`, mem);
+          if (!mem.typeAnnotation) bug(`expected type for ${mem.key.name}`);
           return {
             name: mem.key.name,
             type: ofTSType(mem.typeAnnotation.typeAnnotation)
@@ -28,11 +28,11 @@ export default function ofTSType(tsType: AST.TSType): Types.Type {
       const args =
         tsType.parameters.map(param => {
           if (!AST.isIdentifier(param)) bug(`unimplemented ${param.type}`);
-          if (!param.typeAnnotation) err(`type required for ${param.name}`, param);
+          if (!param.typeAnnotation) bug(`expected type for ${param.name}`);
           if (!AST.isTSTypeAnnotation(param.typeAnnotation)) bug(`unimplemented ${param.typeAnnotation.type}`);
           return ofTSType(param.typeAnnotation.typeAnnotation);
         });
-      if (!tsType.typeAnnotation) err(`return type required`, tsType);
+      if (!tsType.typeAnnotation) bug(`expected return type`);
       const ret = ofTSType(tsType.typeAnnotation.typeAnnotation);
       return Type.functionType(args, ret);
     }
