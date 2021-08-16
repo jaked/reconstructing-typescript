@@ -5,6 +5,6 @@ export const boolean: Types.Boolean = { type: 'Boolean' };
 export const number: Types.Number = { type: 'Number' };
 export const string: Types.String = { type: 'String' };
 
-export function object(properties: { [name: string]: Types.Type }): Types.Object {
+export function object(properties: { name: string, type: Types.Type }[]): Types.Object {
   return { type: 'Object', properties }
 }

@@ -23,5 +23,5 @@ export type String = {
 
 export type Object = {
   type: 'Object';
-  properties: { [name: string]: Type };
+  properties: { name: string, type: Type }[];
 }

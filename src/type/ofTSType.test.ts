@@ -11,6 +11,9 @@ function expectOfTSType(typeExpr: string, type: Type) {
 it('object', () => {
   expectOfTSType(
     '{ foo: number, bar: boolean }',
-    Type.object({ foo: Type.number, bar: Type.boolean })
+    Type.object([
+      { name: 'foo', type: Type.number },
+      { name: 'bar', type: Type.boolean }
+    ])
   );
 });

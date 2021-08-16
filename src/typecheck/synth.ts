@@ -27,29 +27,27 @@ function synthString(ast: StringLiteral): Type {
 }
 
 function synthObject(ast: ObjectExpression): Type {
-  const fields =
-    ast.properties.reduce<{ [n: string]: Type.Type }>(
-      (obj, prop) => {
-        if (prop.type !== 'ObjectProperty') bug(`unimplemented ${prop.type}`);
-        const key = prop.key as Expression;
-        if (key.type !== 'Identifier') bug(`unimplemented ${key.type}`);
-        const expr = prop.value as Expression;
-        return Object.assign(obj, { [key.name]: synth(expr) })
-      },
-      { }
-    );
-  return Type.object(fields);
+  const properties =
+    ast.properties.map(prop => {
+      if (prop.type !== 'ObjectProperty') bug(`unimplemented ${prop.type}`);
+      if (prop.key.type !== 'Identifier') bug(`unimplemented ${prop.key.type}`);
+      return {
+        name: prop.key.name,
+        type: synth(prop.value as Expression)
+      };
+    });
+  return Type.object(properties);
 }
 
 function synthMember(ast: MemberExpression): Type {
   if (ast.computed) bug(`unimplemented computed`);
-  const property = ast.property as Expression;
+  const property = ast.property;
   if (property.type !== 'Identifier') bug(`unimplemented ${property.type}`);
   const object = synth(ast.object);
   if (object.type !== 'Object') err('. expects object', ast.object);
-  const type = object.properties[property.name];
-  if (!type) err(`no such property ${property.name}`, property);
-  return type;
+  const typeProp = object.properties.find(({ name: typeName }) => typeName === property.name);
+  if (!typeProp) err(`no such property ${property.name}`, property);
+  return typeProp.type;
 }
 
 export default function synth(ast: Expression): Type {

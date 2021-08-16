@@ -8,22 +8,25 @@ import Type from '../type';
 import synth from './synth';
 
 function checkObject(ast: ObjectExpression, type: Type.Object) {
-  const astProps: { [name: string]: [Identifier, Expression] } =
-    Object.assign({}, ...ast.properties.map(prop => {
+  const astProps: { name: string, expr: Expression, key: Identifier }[] =
+    ast.properties.map(prop => {
       if (prop.type !== 'ObjectProperty') bug(`unimplemented ${prop.type}`);
-      const key = prop.key as Expression;
-      if (key.type !== 'Identifier') bug(`unimplemented ${key.type}`);
-      const expr = prop.value as Expression;
-      return { [key.name]: [key, expr] };
-    }));
+      if (prop.key.type !== 'Identifier') bug(`unimplemented ${prop.key.type}`);
+      return {
+        name: prop.key.name,
+        expr: prop.value as Expression,
+        key: prop.key
+      };
+    });
 
-  Object.entries(type.properties).forEach(([ name, type ]) => {
-    if (!astProps[name]) err(`missing property ${name}`, ast);
+  type.properties.forEach(({ name }) => {
+    const astProp = astProps.find(({ name: astName }) => astName === name);
+    if (!astProp) err(`missing property ${name}`, ast);
   });
 
-  Object.entries(astProps).forEach(([name, [key, expr]]) => {
-    const propType = type.properties[name];
-    if (propType) check(expr, propType);
+  astProps.forEach(({ name, expr, key }) => {
+    const prop = type.properties.find(({ name: propName }) => propName === name);
+    if (prop) check(expr, prop.type);
     else err(`extra property ${name}`, key);
   });
 }

@@ -14,16 +14,15 @@ export default function ofTSType(tsType: TSType): Types.Type {
 
     case 'TSTypeLiteral': {
       const props =
-        tsType.members.reduce<{ [name: string]: Types.Type }>(
-          (obj, mem) => {
-            if (mem.type !== 'TSPropertySignature') bug(`unimplemented ${mem.type}`);
-            if (mem.key.type !== 'Identifier') bug(`unimplemented ${mem.key.type}`);
-            if (!mem.typeAnnotation) err(`type required for ${mem.key.name}`, mem);
-            const type = ofTSType(mem.typeAnnotation.typeAnnotation);
-            return Object.assign(obj, { [mem.key.name]: type });
-          },
-          { }
-        );
+        tsType.members.map(mem => {
+          if (mem.type !== 'TSPropertySignature') bug(`unimplemented ${mem.type}`);
+          if (mem.key.type !== 'Identifier') bug(`unimplemented ${mem.key.type}`);
+          if (!mem.typeAnnotation) err(`type required for ${mem.key.name}`, mem);
+          return {
+            name: mem.key.name,
+            type: ofTSType(mem.typeAnnotation.typeAnnotation)
+          };
+        });
       return Type.object(props);
     }
 
