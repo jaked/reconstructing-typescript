@@ -32,6 +32,7 @@ module Type {
   export const isString = Validators.isString;
   export const isObject = Validators.isObject;
   export const isFunction = Validators.isFunction;
+  export const isSingleton = Validators.isSingleton;
 
   export const isSubtype = IsSubtype;
   export const toString = ToString;

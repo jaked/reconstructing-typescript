@@ -116,14 +116,14 @@ function synthCall(env: Env, ast: AST.CallExpression): Type {
 
 const synthBinary = Trace.instrument('synthBinary',
 function synthBinary(env: Env, ast: AST.BinaryExpression): Type {
-  assert(ast.operator === '+', `unimplemented ${ast.operator}`);
+  if (ast.operator !== '+') bug(`unimplemented ${ast.operator}`);
   if (!AST.isExpression(ast.left)) bug(`unimplemented ${ast.left.type}`)
 
   const left = synth(env, ast.left);
   const right = synth(env, ast.right);
 
-  if (left.type === 'Singleton' && right.type === 'Singleton') {
-    if (left.base.type === 'Number' && right.base.type === 'Number') {
+  if (Type.isSingleton(left) && Type.isSingleton(right)) {
+    if (Type.isNumber(left.base) && Type.isNumber(right.base)) {
       if (typeof left.value !== 'number' || typeof right.value !== 'number')
         bug('unexpected value');
       return Type.singleton(left.value + right.value);
@@ -142,7 +142,7 @@ function synthBinary(env: Env, ast: AST.BinaryExpression): Type {
 
 const synthLogical = Trace.instrument('synthLogical',
 function synthLogical(env: Env, ast: AST.LogicalExpression): Type {
-  assert(ast.operator === '&&', `unimplemented ${ast.operator}`);
+  if (ast.operator !== '&&') bug(`unimplemented ${ast.operator}`);
 
   const left = synth(env, ast.left);
   const right = synth(env, ast.right);
@@ -158,7 +158,7 @@ function synthLogical(env: Env, ast: AST.LogicalExpression): Type {
 
 const synthUnary = Trace.instrument('synthUnary',
 function synthUnary(env: Env, ast: AST.UnaryExpression): Type {
-  assert(ast.operator === '!', `unimplemented ${ast.operator}`);
+  if (ast.operator !== '!') bug(`unimplemented ${ast.operator}`);
 
   const argument = synth(env, ast.argument);
 

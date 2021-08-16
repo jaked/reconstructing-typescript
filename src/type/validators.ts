@@ -23,3 +23,7 @@ export function isObject(type: Types.Type): type is Types.Object {
 export function isFunction(type: Types.Type): type is Types.Function {
   return type.type === 'Function';
 }
+
+export function isSingleton(type: Types.Type): type is Types.Singleton {
+  return type.type === 'Singleton';
+}

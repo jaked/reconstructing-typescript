@@ -1,4 +1,5 @@
 import { Type } from './types';
+import { isString } from './validators';
 
 export default function toString(type: Type): string {
   switch (type.type) {
@@ -21,7 +22,7 @@ export default function toString(type: Type): string {
     }
 
     case 'Singleton':
-      if (type.base.type === 'String')
+      if (isString(type.base))
         return `'${type.value}'`;
       else
         return `${type.value}`;
