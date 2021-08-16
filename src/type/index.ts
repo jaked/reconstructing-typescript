@@ -51,6 +51,7 @@ module Type {
   export const isSingleton = Validators.isSingleton;
   export const isUnion = Validators.isUnion;
   export const isIntersection = Validators.isIntersection;
+  export const isNot = Validators.isNot;
 
   export const isSubtype = IsSubtype;
   export const map = Map;

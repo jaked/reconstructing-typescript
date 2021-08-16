@@ -43,3 +43,7 @@ export function isUnion(type: Types.Type): type is Types.Union {
 export function isIntersection(type: Types.Type): type is Types.Intersection {
   return type.type === 'Intersection';
 }
+
+export function isNot(type: Types.Type): type is Types.Not {
+  return type.type === 'Not';
+}

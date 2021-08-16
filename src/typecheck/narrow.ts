@@ -1,12 +1,5 @@
-import {
-  BinaryExpression,
-  Expression,
-  Identifier,
-  LogicalExpression,
-  MemberExpression,
-  UnaryExpression
-} from '@babel/types';
-import { assert, bug } from '../util/err';
+import * as AST from '@babel/types';
+import { bug } from '../util/err';
 import Type from '../type';
 import Env from './env';
 import synth from './synth';
@@ -15,52 +8,51 @@ import synth from './synth';
 // 'b' may contain Not-types
 // the return type will not contain Not-types
 export function narrowType(a: Type, b: Type): Type {
-  if (a.type === 'Never' || b.type === 'Never') return Type.never;
-  if (a.type === 'Unknown') return b;
-  if (b.type === 'Unknown') return a;
+  if (Type.isNever(a) || Type.isNever(b)) return Type.never;
+  if (Type.isUnknown(a)) return b;
+  if (Type.isUnknown(b)) return a;
 
-  if (a.type === 'Null' && b.type === 'Null') return a;
-  if (a.type === 'Boolean' && b.type === 'Boolean') return a;
-  if (a.type === 'Number' && b.type === 'Number') return a;
-  if (a.type === 'String' && b.type === 'String') return a;
+  if (Type.isNull(a) && Type.isNull(b)) return a;
+  if (Type.isBoolean(a) && Type.isBoolean(b)) return a;
+  if (Type.isNumber(a) && Type.isNumber(b)) return a;
+  if (Type.isString(a) && Type.isString(b)) return a;
 
-  if (a.type === 'Union')
+  if (Type.isUnion(a))
     return Type.union(...a.types.map(a => narrowType(a, b)));
-  if (b.type === 'Union')
+  if (Type.isUnion(b))
     return Type.union(...b.types.map(b => narrowType(a, b)));
-  if (a.type === 'Intersection')
+  if (Type.isIntersection(a))
     return Type.intersection(...a.types.map(a => narrowType(a, b)));
-  if (b.type === 'Intersection')
+  if (Type.isIntersection(b))
     return Type.intersection(...b.types.map(b => narrowType(a, b)));
 
-  if (b.type === 'Not') {
+  if (Type.isNot(b)) {
     if (Type.equiv(a, b.base)) return Type.never;
-    else if (a.type === 'Boolean' && b.base.type === 'Singleton' && b.base.base.type == 'Boolean') {
+    else if (Type.isBoolean(a) && Type.isSingleton(b.base) && Type.isBoolean(b.base.base)) {
       if (b.base.value === true) return Type.singleton(false);
       else return Type.singleton(true);
     }
     else return a;
   }
 
-  if (a.type === 'Singleton' && b.type === 'Singleton')
+  if (Type.isSingleton(a) && Type.isSingleton(b))
     return (a.value === b.value) ? a : Type.never;
-  if (a.type === 'Singleton')
+  if (Type.isSingleton(a))
     return (a.base.type === b.type) ? a : Type.never;
-  if (b.type === 'Singleton')
+  if (Type.isSingleton(b))
     return (b.base.type === a.type) ? b : Type.never;
 
-  if (a.type === 'Object' && b.type === 'Object') {
+  if (Type.isObject(a) && Type.isObject(b)) {
     const properties =
-      Object.entries(a.properties).reduce<{ [n: string]: Type }>(
-        (props, [ name, aType ]) => {
-          const bType = b.properties[name];
+      a.properties.map(({ name, type: aType }) => {
+          const bType = Type.propType(b, name);
           const type = bType ? narrowType(aType, bType) : aType;
-          return Object.assign(props, { [name]: type });
+          return { name, type };
           // if there are  fields in `b` that are not in `a`, ignore them
         },
         { }
       );
-    if (Object.entries(properties).some(([_, type]) => type.type === 'Never'))
+    if (properties.some(({ type }) => Type.isNever(type)))
       return Type.never;
     else
       return Type.object(properties);
@@ -73,22 +65,22 @@ export function narrowType(a: Type, b: Type): Type {
 
 function narrowPathIdentifier(
   env: Env,
-  ast: Identifier,
+  ast: AST.Identifier,
   otherType: Type
 ): Env {
-  const identType = env(ast.name);
-  assert(identType, 'expected bound identifer');
+  const identType = env.get(ast.name);
+  if (!identType) bug('expected bound identifer');
   const type = narrowType(identType, otherType);
   return env.set(ast.name, type);
 }
 
 function narrowPathMember(
   env: Env,
-  ast: MemberExpression,
+  ast: AST.MemberExpression,
   otherType: Type
 ): Env {
-  assert(!ast.computed, `unimplemented computed`);
-  assert(ast.property.type === 'Identifier', `unexpected ${ast.property.type}`);
+  if (ast.computed) bug(`unimplemented computed`);
+  if (!AST.isIdentifier(ast.property)) bug(`unexpected ${ast.property.type}`);
   return narrowPath(
     env,
     ast.object,
@@ -98,7 +90,7 @@ function narrowPathMember(
 
 function narrowPathUnary(
   env: Env,
-  ast: UnaryExpression,
+  ast: AST.UnaryExpression,
   otherType: Type
 ): Env {
   switch (ast.operator) {
@@ -106,7 +98,7 @@ function narrowPathUnary(
       return env;
 
     case 'typeof':
-      if (otherType.type === 'Singleton') {
+      if (Type.isSingleton(otherType)) {
         switch (otherType.value) {
           case 'boolean':
             return narrowPath(env, ast.argument, Type.boolean);
@@ -119,7 +111,7 @@ function narrowPathUnary(
           // TODO functions
           default: return env;
         }
-      } else if (otherType.type === 'Not' && otherType.base.type === 'Singleton') {
+      } else if (Type.isNot(otherType) && Type.isSingleton(otherType.base)) {
         switch (otherType.base.value) {
           case 'boolean':
             return narrowPath(env, ast.argument, Type.not(Type.boolean));
@@ -142,7 +134,7 @@ function narrowPathUnary(
 // narrow environment under the assumption that `ast` has type `otherType`
 function narrowPath(
   env: Env,
-  ast: Expression,
+  ast: AST.Expression,
   otherType: Type
 ): Env {
   switch (ast.type) {
@@ -161,7 +153,7 @@ function narrowPath(
 
 function narrowUnary(
   env: Env,
-  ast: UnaryExpression,
+  ast: AST.UnaryExpression,
   assume: boolean
 ): Env {
   switch (ast.operator) {
@@ -178,7 +170,7 @@ function narrowUnary(
 
 function narrowLogical(
   env: Env,
-  ast: LogicalExpression,
+  ast: AST.LogicalExpression,
   assume: boolean
 ): Env {
   switch (ast.operator) {
@@ -214,9 +206,10 @@ function narrowLogical(
 
 function narrowBinary(
   env: Env,
-  ast: BinaryExpression,
+  ast: AST.BinaryExpression,
   assume: boolean
 ): Env {
+  if (!AST.isExpression(ast.left)) bug(`unimplemented ${ast.left.type}`);
   const left = synth(env, ast.left);
   const right = synth(env, ast.right);
   if (ast.operator === '===' && assume || ast.operator === '!==' && !assume) {
@@ -231,7 +224,7 @@ function narrowBinary(
 // narrow environment under the assumption that `ast` is truthy / falsy
 export function narrow(
   env: Env,
-  ast: Expression,
+  ast: AST.Expression,
   assume: boolean
 ): Env {
   switch (ast.type) {

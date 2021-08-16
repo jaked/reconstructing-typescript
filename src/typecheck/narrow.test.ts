@@ -8,8 +8,8 @@ function expectNarrow(type: string, expr: string, trueType: string, falseType: s
   const trueTypeAst = Parse.parseType(trueType);
   const falseTypeAst = Parse.parseType(falseType);
   const env = Env({ x: typeAst });
-  expect(narrow(env, exprAst, true)('x')).toEqual(trueTypeAst);
-  expect(narrow(env, exprAst, false)('x')).toEqual(falseTypeAst);
+  expect(narrow(env, exprAst, true).get('x')).toEqual(trueTypeAst);
+  expect(narrow(env, exprAst, false).get('x')).toEqual(falseTypeAst);
 }
 
 describe('narrow', () => {
