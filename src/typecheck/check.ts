@@ -3,22 +3,22 @@ import {
   Identifier,
   ObjectExpression
 } from '@babel/types';
-import { assert, err, ensure } from '../util/err';
+import { bug, err } from '../util/err';
 import Type from '../type';
 import synth from './synth';
 
 function checkObject(ast: ObjectExpression, type: Type.Object) {
   const astProps: { [name: string]: [Identifier, Expression] } =
     Object.assign({}, ...ast.properties.map(prop => {
-      assert(prop.type === 'ObjectProperty', `unimplemented ${prop.type}`);
+      if (prop.type !== 'ObjectProperty') bug(`unimplemented ${prop.type}`);
       const key = prop.key as Expression;
-      assert(key.type === 'Identifier', `unimplemented ${key.type}`);
+      if (key.type !== 'Identifier') bug(`unimplemented ${key.type}`);
       const expr = prop.value as Expression;
       return { [key.name]: [key, expr] };
     }));
 
   Object.entries(type.properties).forEach(([ name, type ]) => {
-    ensure(astProps[name], `missing property ${name}`, ast);
+    if (!astProps[name]) err(`missing property ${name}`, ast);
   });
 
   Object.entries(astProps).forEach(([name, [key, expr]]) => {

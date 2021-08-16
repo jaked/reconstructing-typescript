@@ -1,6 +1,6 @@
 import { Expression } from '@babel/types';
 import * as Babel from '@babel/parser';
-import { assert } from '../util/err';
+import { bug } from '../util/err';
 import Type from '../type';
 
 export function parseExpression(input: string): Expression {
@@ -11,6 +11,6 @@ export function parseExpression(input: string): Expression {
 
 export function parseType(input: string): Type {
   const ast = parseExpression(`_ as ${input}`);
-  assert(ast.type === 'TSAsExpression', `unexpected ${ast.type}`);
+  if (ast.type !== 'TSAsExpression') bug(`unexpected ${ast.type}`);
   return Type.ofTSType(ast.typeAnnotation);
 }
