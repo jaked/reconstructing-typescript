@@ -7,7 +7,7 @@ import Env from './env';
 
 const synthIdentifier = Trace.instrument('synthIdentifier',
 function synthIdentifier(env: Env, ast: AST.Identifier): Type {
-  const type = env(ast.name);
+  const type = env.get(ast.name);
   if (!type) err(`unbound identifier '${ast.name}'`, ast);
   return type;
 }
