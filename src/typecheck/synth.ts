@@ -30,6 +30,7 @@ function synthObject(ast: ObjectExpression): Type {
   const properties =
     ast.properties.map(prop => {
       if (prop.type !== 'ObjectProperty') bug(`unimplemented ${prop.type}`);
+      if (prop.computed) bug(`unimplemented computed`);
       if (prop.key.type !== 'Identifier') bug(`unimplemented ${prop.key.type}`);
       return {
         name: prop.key.name,
@@ -41,12 +42,12 @@ function synthObject(ast: ObjectExpression): Type {
 
 function synthMember(ast: MemberExpression): Type {
   if (ast.computed) bug(`unimplemented computed`);
-  const property = ast.property;
-  if (property.type !== 'Identifier') bug(`unimplemented ${property.type}`);
+  const prop = ast.property;
+  if (prop.type !== 'Identifier') bug(`unimplemented ${prop.type}`);
   const object = synth(ast.object);
   if (object.type !== 'Object') err('. expects object', ast.object);
-  const typeProp = object.properties.find(({ name: typeName }) => typeName === property.name);
-  if (!typeProp) err(`no such property ${property.name}`, property);
+  const typeProp = object.properties.find(({ name: typeName }) => typeName === prop.name);
+  if (!typeProp) err(`no such property ${prop.name}`, prop);
   return typeProp.type;
 }
 

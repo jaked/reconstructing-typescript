@@ -11,6 +11,7 @@ function checkObject(ast: ObjectExpression, type: Type.Object) {
   const astProps: { name: string, expr: Expression, key: Identifier }[] =
     ast.properties.map(prop => {
       if (prop.type !== 'ObjectProperty') bug(`unimplemented ${prop.type}`);
+      if (prop.computed) bug(`unimplemented computed`);
       if (prop.key.type !== 'Identifier') bug(`unimplemented ${prop.key.type}`);
       return {
         name: prop.key.name,
