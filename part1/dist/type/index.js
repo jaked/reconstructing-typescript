@@ -3,7 +3,8 @@ import IsSubtype from "./isSubtype.js";
 import ToString from "./toString.js";
 import OfTSType from "./ofTSType.js";
 var Type;
-(function(Type2) {
+
+(function (Type2) {
   Type2.nullType = Constructors.nullType;
   Type2.boolean = Constructors.boolean;
   Type2.number = Constructors.number;
@@ -13,4 +14,5 @@ var Type;
   Type2.toString = ToString;
   Type2.ofTSType = OfTSType;
 })(Type || (Type = {}));
+
 export default Type;
