@@ -1,13 +1,19 @@
 {
+  "include": ["src", "types"],
   "compilerOptions": {
-    "outDir": "./build/",
-
+    "module": "esnext",
+    "target": "esnext",
+    "moduleResolution": "node",
+    "jsx": "preserve",
+    "baseUrl": "./",
+    "paths": {
+      "*": [".snowpack/types/*"]
+    },
+    "noEmit": true,
     "strict": true,
     "noFallthroughCasesInSwitch": true,
-
-    "module": "commonjs",
-    "esModuleInterop": true,
-    "target": "es2015",
-    "lib": [ "es2017", "es2017.object",  ],
-  },
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+  }
 }
