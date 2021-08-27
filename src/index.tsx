@@ -28,10 +28,13 @@ const Label: React.FunctionComponent<{ gridArea: string }> = ({ gridArea, childr
   <div
     style={{
       gridArea,
-      justifySelf: "end"
+      justifySelf: "end",
+      alignSelf: "center",
+      fontFamily: "serif",
+      fontSize: "19px"
     }}
   >
-    <h3>{children}</h3>
+    {children}
   </div>
 
 const highlight = (code: string) =>
@@ -53,29 +56,18 @@ const App = () => {
   return (
     <div
       style={{
-        backgroundColor: 'aliceblue',
-        padding: "10px",
         display: "grid",
-        gridTemplateColumns: "1fr 2fr 1fr",
-        gridTemplateRows: "1fr 2fr 2fr 1fr",
+        gridTemplateColumns: "max-content 1fr",
+        gridTemplateRows: "1fr 1fr",
         gridTemplateAreas: `
-          "blank     title"
-          "codeLabel editor"
+          "editorLabel editor"
           "typeLabel type"
         `,
-        height: "100vh",
-        width: "100vw"
+        height: "300px",
+        width: "700px"
       }}
     >
-      <div
-        style={{
-          gridArea: 'title',
-          justifySelf: 'center',
-          alignSelf: 'end',
-        }}>
-          <h1>Reconstructing TypeScript</h1>
-      </div>
-      <Label gridArea={'codeLabel'}>expression</Label>
+      <Label gridArea='editorLabel'>expression</Label>
       <ScrollBox gridArea={'editor'}>
         <Editor
           highlight={highlight}
@@ -87,7 +79,7 @@ const App = () => {
           }}
         />
       </ScrollBox>
-      <Label gridArea={'typeLabel'}>type</Label>
+      <Label gridArea='typeLabel'>type</Label>
       <ScrollBox gridArea={'type'}>
         <div style={{
           fontFamily: "monospace",
