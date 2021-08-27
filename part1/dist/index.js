@@ -29,9 +29,12 @@ const Label = ({
 }) => /* @__PURE__ */React.createElement("div", {
   style: {
     gridArea,
-    justifySelf: "end"
+    justifySelf: "end",
+    alignSelf: "center",
+    fontFamily: "serif",
+    fontSize: "19px"
   }
-}, /* @__PURE__ */React.createElement("h3", null, children));
+}, children);
 
 const highlight = code => Prism.highlight(code, Prism.languages.typescript, "typescript");
 
@@ -59,27 +62,18 @@ const App = () => {
 
   return /* @__PURE__ */React.createElement("div", {
     style: {
-      backgroundColor: "aliceblue",
-      padding: "10px",
       display: "grid",
-      gridTemplateColumns: "1fr 2fr 1fr",
-      gridTemplateRows: "1fr 2fr 2fr 1fr",
+      gridTemplateColumns: "max-content 1fr",
+      gridTemplateRows: "1fr 1fr",
       gridTemplateAreas: `
-          "blank     title"
-          "codeLabel editor"
+          "editorLabel editor"
           "typeLabel type"
         `,
-      height: "100vh",
-      width: "100vw"
+      height: "300px",
+      width: "700px"
     }
-  }, /* @__PURE__ */React.createElement("div", {
-    style: {
-      gridArea: "title",
-      justifySelf: "center",
-      alignSelf: "end"
-    }
-  }, /* @__PURE__ */React.createElement("h1", null, "Reconstructing TypeScript")), /* @__PURE__ */React.createElement(Label, {
-    gridArea: "codeLabel"
+  }, /* @__PURE__ */React.createElement(Label, {
+    gridArea: "editorLabel"
   }, "expression"), /* @__PURE__ */React.createElement(ScrollBox, {
     gridArea: "editor"
   }, /* @__PURE__ */React.createElement(Editor, {
