@@ -24,3 +24,12 @@ describe('property lookup', () => {
     );
   });
 });
+
+describe('as', () => {
+  it('ok', () => {
+    expectSynth(
+      '{ foo: 1 } as { foo: number }',
+      '{ foo: number }'
+    );
+  });
+});

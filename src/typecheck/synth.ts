@@ -5,10 +5,12 @@ import {
   NullLiteral,
   NumericLiteral,
   ObjectExpression,
-  StringLiteral
+  StringLiteral,
+  TSAsExpression,
 } from '@babel/types';
 import { bug, err } from '../util/err';
 import Type from '../type';
+import check from './check';
 
 function synthNull(ast: NullLiteral): Type {
   return Type.nullType;
@@ -51,6 +53,12 @@ function synthMember(ast: MemberExpression): Type {
   return typeProp.type;
 }
 
+function synthTSAs(ast: TSAsExpression): Type {
+  const type = Type.ofTSType(ast.typeAnnotation);
+  check(ast.expression, type);
+  return type;
+}
+
 export default function synth(ast: Expression): Type {
   switch (ast.type) {
     case 'NullLiteral':             return synthNull(ast);
@@ -59,6 +67,7 @@ export default function synth(ast: Expression): Type {
     case 'StringLiteral':           return synthString(ast);
     case 'ObjectExpression':        return synthObject(ast);
     case 'MemberExpression':        return synthMember(ast);
+    case 'TSAsExpression':          return synthTSAs(ast);
 
     default: bug(`unimplemented ${ast.type}`);
   }
