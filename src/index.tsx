@@ -7,6 +7,7 @@ import 'prismjs/components/prism-typescript';
 import * as Trace from './util/trace';
 import { parseExpression } from './ast/parse';
 import synth from './typecheck/synth';
+import Env from './typecheck/env';
 import CallTree from './callTree';
 
 const examples = {
@@ -119,7 +120,7 @@ const App = () => {
     try {
       const ast = parseExpression(code);
       try {
-        synth(ast);
+        synth(Env.empty, ast);
       } catch (e) { }
     } catch (e) {
       err = String(e);

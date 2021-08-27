@@ -6,16 +6,30 @@ import * as Trace from './util/trace';
 import { bug } from './util/err';
 import print from './ast/print';
 import Type from './type';
+import Env from './typecheck/env';
+
+function highlight(code: string) {
+  return Prism.highlight(code, Prism.languages.typescript, 'typescript');
+}
 
 type Range = { start: number, end: number };
 
 const expression = (ast: AST.Expression) => {
-  const __html = Prism.highlight(print(ast), Prism.languages.typescript, 'typescript');
+  const __html = highlight(print(ast));
   return <span dangerouslySetInnerHTML={{ __html }} />;
 }
 
 const type = (type: Type) => {
-  const __html = Prism.highlight(Type.toString(type), Prism.languages.typescript, 'typescript');
+  const __html = highlight(Type.toString(type));
+  return <span dangerouslySetInnerHTML={{ __html }} />;
+}
+
+const env = (env: Env) => {
+  const bindings: string[] = [];
+  for (const [name, type] of env.entries()) {
+    bindings.push(`${name}: ${highlight(Type.toString(type))}`);
+  }
+  const __html = `Env({${ bindings.length === 0 ? '' : ` ${bindings.join(', ')} ` }})`;
   return <span dangerouslySetInnerHTML={{ __html }} />;
 }
 
@@ -35,19 +49,23 @@ type FunctionDescriptor = {
 }
 
 const functions: { [name: string]: FunctionDescriptor } = {
-  check: { args: [expression, type], ret: none },
-  checkObject: { args: [expression, type], ret: none },
+  check: { args: [env, expression, type], ret: none },
+  checkObject: { args: [env, expression, type], ret: none },
+  checkFunction: { args: [env, expression, type], ret: none },
 
   isSubtype: { args: [type, type], ret: boolean },
 
-  synth: { args: [expression], ret: type },
-  synthNull: { args: [expression], ret: type },
-  synthBoolean: { args: [expression], ret: type },
-  synthNumber: { args: [expression], ret: type },
-  synthString: { args: [expression], ret: type },
-  synthObject: { args: [expression], ret: type },
-  synthMember: { args: [expression], ret: type },
-  synthTSAs: { args: [expression], ret: type },
+  synth: { args: [env, expression], ret: type },
+  synthIdentifier: { args: [env, expression], ret: type },
+  synthNull: { args: [env, expression], ret: type },
+  synthBoolean: { args: [env, expression], ret: type },
+  synthNumber: { args: [env, expression], ret: type },
+  synthString: { args: [env, expression], ret: type },
+  synthObject: { args: [env, expression], ret: type },
+  synthMember: { args: [env, expression], ret: type },
+  synthTSAs: { args: [env, expression], ret: type },
+  synthFunction: { args: [env, expression], ret: type },
+  synthCall: { args: [env, expression], ret: type },
 }
 
 const Args = ({ call }: { call: Trace.call }) => {

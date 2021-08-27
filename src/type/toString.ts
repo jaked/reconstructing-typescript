@@ -17,7 +17,7 @@ export default function toString(type: Type): string {
 
     case 'Function': {
       const args = type.args.map(toString);
-      return `(${args.join(', ')}) => ${type.ret}`
+      return `(${args.join(', ')}) => ${toString(type.ret)}`
     }
   }
 }

@@ -5,7 +5,8 @@ function Env(map: Map<string, Type> | { [name: string]: Type }): Env {
     return {
       get: (name: string) => map.get(name),
       set: (name: string, type: Type) =>
-        Env(new Map([...map, [name, type]]))
+        Env(new Map([...map, [name, type]])),
+      entries: () => map.entries()
     }
   } else {
     return Env(new Map(Object.entries(map)));
@@ -15,10 +16,11 @@ function Env(map: Map<string, Type> | { [name: string]: Type }): Env {
 type Env = {
   get(name: string): Type | undefined;
   set(name: string, type: Type): Env;
+  entries(): IterableIterator<[string, Type]>;
 }
 
 module Env {
-  export const empty = new Map();
+  export const empty = Env({});
 }
 
 export default Env;
