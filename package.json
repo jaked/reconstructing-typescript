@@ -23,7 +23,7 @@
   "scripts": {
     "start": "snowpack dev",
     "build": "snowpack build",
-    "deploy": "gh-pages --dist build --dest part1",
+    "deploy": "gh-pages --dist build --dest `git branch --show-current`",
     "test": "jest"
   }
 }
