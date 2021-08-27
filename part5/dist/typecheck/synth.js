@@ -51,6 +51,12 @@ function synthMember(env, ast) {
   });
 }
 
+function synthTSAs(env, ast) {
+  const type = Type.ofTSType(ast.typeAnnotation);
+  check(env, ast.expression, type);
+  return type;
+}
+
 function synthFunction(env, ast) {
   const params = ast.params.map(param => {
     if (param.type !== "Identifier") bug(`unimplemented ${param.type}`);
@@ -176,6 +182,9 @@ export default function synth(env, ast) {
 
     case "MemberExpression":
       return synthMember(env, ast);
+
+    case "TSAsExpression":
+      return synthTSAs(env, ast);
 
     case "ArrowFunctionExpression":
       return synthFunction(env, ast);
