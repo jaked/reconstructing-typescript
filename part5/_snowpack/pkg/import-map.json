@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "prismjs/components/prism-typescript": "./prismjs/components/prism-typescript.js"
+  }
+}
