@@ -1,5 +1,6 @@
 import { bug, err } from "../util/err.js";
 import Type from "../type/index.js";
+import check from "./check.js";
 
 function synthNull(ast) {
   return Type.nullType;
@@ -43,6 +44,12 @@ function synthMember(ast) {
   return typeProp.type;
 }
 
+function synthTSAs(ast) {
+  const type = Type.ofTSType(ast.typeAnnotation);
+  check(ast.expression, type);
+  return type;
+}
+
 export default function synth(ast) {
   switch (ast.type) {
     case "NullLiteral":
@@ -62,6 +69,9 @@ export default function synth(ast) {
 
     case "MemberExpression":
       return synthMember(ast);
+
+    case "TSAsExpression":
+      return synthTSAs(ast);
 
     default:
       bug(`unimplemented ${ast.type}`);
