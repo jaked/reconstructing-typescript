@@ -1,65 +1,57 @@
-import {
-  BooleanLiteral,
-  Expression,
-  MemberExpression,
-  NullLiteral,
-  NumericLiteral,
-  ObjectExpression,
-  StringLiteral,
-  TSAsExpression,
-} from '@babel/types';
+import * as AST from '@babel/types';
 import { bug, err } from '../util/err';
 import Type from '../type';
 import check from './check';
 
-function synthNull(ast: NullLiteral): Type {
+function synthNull(ast: AST.NullLiteral): Type {
   return Type.nullType;
 }
 
-function synthBoolean(ast: BooleanLiteral): Type {
+function synthBoolean(ast: AST.BooleanLiteral): Type {
   return Type.boolean;
 }
 
-function synthNumber(ast: NumericLiteral): Type {
+function synthNumber(ast: AST.NumericLiteral): Type {
   return Type.number;
 }
 
-function synthString(ast: StringLiteral): Type {
+function synthString(ast: AST.StringLiteral): Type {
   return Type.string;
 }
 
-function synthObject(ast: ObjectExpression): Type {
+function synthObject(ast: AST.ObjectExpression): Type {
   const properties =
     ast.properties.map(prop => {
-      if (prop.type !== 'ObjectProperty') bug(`unimplemented ${prop.type}`);
+      if (!AST.isObjectProperty(prop)) bug(`unimplemented ${prop.type}`);
+      if (!AST.isIdentifier(prop.key)) bug(`unimplemented ${prop.key.type}`);
+      if (!AST.isExpression(prop.value)) bug(`unimplemented ${prop.value.type}`);
       if (prop.computed) bug(`unimplemented computed`);
-      if (prop.key.type !== 'Identifier') bug(`unimplemented ${prop.key.type}`);
       return {
         name: prop.key.name,
-        type: synth(prop.value as Expression)
+        type: synth(prop.value)
       };
     });
   return Type.object(properties);
 }
 
-function synthMember(ast: MemberExpression): Type {
-  if (ast.computed) bug(`unimplemented computed`);
+function synthMember(ast: AST.MemberExpression): Type {
   const prop = ast.property;
-  if (prop.type !== 'Identifier') bug(`unimplemented ${prop.type}`);
+  if (!AST.isIdentifier(prop)) bug(`unimplemented ${prop.type}`);
+  if (ast.computed) bug(`unimplemented computed`);
   const object = synth(ast.object);
-  if (object.type !== 'Object') err('. expects object', ast.object);
-  const typeProp = object.properties.find(({ name: typeName }) => typeName === prop.name);
-  if (!typeProp) err(`no such property ${prop.name}`, prop);
-  return typeProp.type;
+  if (!Type.isObject(object)) err('. expects object', ast.object);
+  const type = Type.propType(object, prop.name);
+  if (!type) err(`no such property ${prop.name}`, prop);
+  return type;
 }
 
-function synthTSAs(ast: TSAsExpression): Type {
+function synthTSAs(ast: AST.TSAsExpression): Type {
   const type = Type.ofTSType(ast.typeAnnotation);
   check(ast.expression, type);
   return type;
 }
 
-export default function synth(ast: Expression): Type {
+export default function synth(ast: AST.Expression): Type {
   switch (ast.type) {
     case 'NullLiteral':             return synthNull(ast);
     case 'BooleanLiteral':          return synthBoolean(ast);

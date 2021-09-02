@@ -1,8 +1,10 @@
 import * as Types from './types';
 import * as Constructors from './constructors';
+import * as Validators from './validators';
 import IsSubtype from './isSubtype';
 import ToString from './toString';
 import OfTSType from './ofTSType';
+import PropType from './propType';
 
 module Type {
   export type Null = Types.Null;
@@ -19,9 +21,17 @@ module Type {
   export const string = Constructors.string;
   export const object = Constructors.object;
 
+  export const isNull = Validators.isNull;
+  export const isBoolean = Validators.isBoolean;
+  export const isNumber = Validators.isNumber;
+  export const isString = Validators.isString;
+  export const isObject = Validators.isObject;
+
   export const isSubtype = IsSubtype;
   export const toString = ToString;
   export const ofTSType = OfTSType;
+
+  export const propType = PropType;
 }
 
 type Type = Type.Type;

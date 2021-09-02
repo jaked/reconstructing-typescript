@@ -1,11 +1,9 @@
-import {
-  TSType
-} from '@babel/types';
+import * as AST from '@babel/types';
 import { bug, err } from '../util/err';
 import * as Types from './types';
 import * as Type from './constructors';
 
-export default function ofTSType(tsType: TSType): Types.Type {
+export default function ofTSType(tsType: AST.TSType): Types.Type {
   switch (tsType.type) {
     case 'TSNullKeyword': return Type.nullType;
     case 'TSBooleanKeyword': return Type.boolean;
@@ -15,8 +13,8 @@ export default function ofTSType(tsType: TSType): Types.Type {
     case 'TSTypeLiteral': {
       const props =
         tsType.members.map(mem => {
-          if (mem.type !== 'TSPropertySignature') bug(`unimplemented ${mem.type}`);
-          if (mem.key.type !== 'Identifier') bug(`unimplemented ${mem.key.type}`);
+          if (!AST.isTSPropertySignature(mem)) bug(`unimplemented ${mem.type}`);
+          if (!AST.isIdentifier(mem.key)) bug(`unimplemented ${mem.key.type}`);
           if (!mem.typeAnnotation) err(`type required for ${mem.key.name}`, mem);
           return {
             name: mem.key.name,

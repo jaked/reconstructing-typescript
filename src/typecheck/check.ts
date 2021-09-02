@@ -1,21 +1,18 @@
-import {
-  Expression,
-  Identifier,
-  ObjectExpression
-} from '@babel/types';
+import * as AST from '@babel/types';
 import { bug, err } from '../util/err';
 import Type from '../type';
 import synth from './synth';
 
-function checkObject(ast: ObjectExpression, type: Type.Object) {
-  const astProps: { name: string, expr: Expression, key: Identifier }[] =
+function checkObject(ast: AST.ObjectExpression, type: Type.Object) {
+  const astProps: { name: string, expr: AST.Expression, key: AST.Identifier }[] =
     ast.properties.map(prop => {
-      if (prop.type !== 'ObjectProperty') bug(`unimplemented ${prop.type}`);
+      if (!AST.isObjectProperty(prop)) bug(`unimplemented ${prop.type}`);
       if (prop.computed) bug(`unimplemented computed`);
-      if (prop.key.type !== 'Identifier') bug(`unimplemented ${prop.key.type}`);
+      if (!AST.isIdentifier(prop.key)) bug(`unimplemented ${prop.key.type}`);
+      if (!AST.isExpression(prop.value)) bug(`unimplemented ${prop.value.type}`);
       return {
         name: prop.key.name,
-        expr: prop.value as Expression,
+        expr: prop.value,
         key: prop.key
       };
     });
@@ -26,14 +23,14 @@ function checkObject(ast: ObjectExpression, type: Type.Object) {
   });
 
   astProps.forEach(({ name, expr, key }) => {
-    const prop = type.properties.find(({ name: propName }) => propName === name);
-    if (prop) check(expr, prop.type);
+    const propType = Type.propType(type, name);
+    if (propType) check(expr, propType);
     else err(`extra property ${name}`, key);
   });
 }
 
-export default function check(ast: Expression, type: Type) {
-  if (ast.type === 'ObjectExpression' && type.type === 'Object')
+export default function check(ast: AST.Expression, type: Type) {
+  if (AST.isObjectExpression(ast) && Type.isObject(type))
     return checkObject(ast, type);
 
   const synthType = synth(ast);
