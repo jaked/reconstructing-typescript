@@ -24,7 +24,7 @@
   "scripts": {
     "start": "snowpack dev",
     "build": "snowpack build",
-    "deploy": "gh-pages --dist build --dest `git branch --show-current`",
+    "deploy": "gh-pages --dist build --dest $npm_package_name",
     "test": "jest"
   }
 }
