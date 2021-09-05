@@ -1,3 +1,4 @@
+import { isString } from "./validators.js";
 export default function toString(type) {
   switch (type.type) {
     case "Null":
@@ -28,6 +29,6 @@ export default function toString(type) {
       }
 
     case "Singleton":
-      if (type.base.type === "String") return `'${type.value}'`;else return `${type.value}`;
+      if (isString(type.base)) return `'${type.value}'`;else return `${type.value}`;
   }
 }
