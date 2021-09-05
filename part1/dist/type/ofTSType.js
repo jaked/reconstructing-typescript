@@ -1,3 +1,4 @@
+import * as AST from "../../_snowpack/pkg/@babel/types.js";
 import { bug, err } from "../util/err.js";
 import * as Type from "./constructors.js";
 export default function ofTSType(tsType) {
@@ -17,8 +18,8 @@ export default function ofTSType(tsType) {
     case "TSTypeLiteral":
       {
         const props = tsType.members.map(mem => {
-          if (mem.type !== "TSPropertySignature") bug(`unimplemented ${mem.type}`);
-          if (mem.key.type !== "Identifier") bug(`unimplemented ${mem.key.type}`);
+          if (!AST.isTSPropertySignature(mem)) bug(`unimplemented ${mem.type}`);
+          if (!AST.isIdentifier(mem.key)) bug(`unimplemented ${mem.key.type}`);
           if (!mem.typeAnnotation) err(`type required for ${mem.key.name}`, mem);
           return {
             name: mem.key.name,

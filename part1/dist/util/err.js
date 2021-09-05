@@ -16,6 +16,9 @@ export class Err extends Error {
 
 }
 export function err(msg, location) {
-  if (location) location = typeof location === "string" ? location : print(location);
-  throw new Err(msg, location);
+  if (location) {
+    if (typeof location === "string") throw new Err(msg, location);else throw new Err(msg, print(location));
+  } else {
+    throw new Err(msg);
+  }
 }

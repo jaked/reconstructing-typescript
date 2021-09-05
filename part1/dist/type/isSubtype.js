@@ -1,18 +1,18 @@
+import propType from "./propType.js";
+import * as Type from "./validators.js";
 export default function isSubtype(a, b) {
-  if (a.type === "Null" && b.type === "Null") return true;
-  if (a.type === "Boolean" && b.type === "Boolean") return true;
-  if (a.type === "Number" && b.type === "Number") return true;
-  if (a.type === "String" && b.type === "String") return true;
+  if (Type.isNull(a) && Type.isNull(b)) return true;
+  if (Type.isBoolean(a) && Type.isBoolean(b)) return true;
+  if (Type.isNumber(a) && Type.isNumber(b)) return true;
+  if (Type.isString(a) && Type.isString(b)) return true;
 
-  if (a.type === "Object" && b.type === "Object") {
+  if (Type.isObject(a) && Type.isObject(b)) {
     return b.properties.every(({
       name: bName,
       type: bType
     }) => {
-      const aProp = a.properties.find(({
-        name: aName
-      }) => aName === bName);
-      if (!aProp) return false;else return isSubtype(aProp.type, bType);
+      const aType = propType(a, bName);
+      if (!aType) return false;else return isSubtype(aType, bType);
     });
   }
 

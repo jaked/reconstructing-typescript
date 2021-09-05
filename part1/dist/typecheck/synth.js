@@ -1,3 +1,4 @@
+import * as AST from "../../_snowpack/pkg/@babel/types.js";
 import { bug, err } from "../util/err.js";
 import Type from "../type/index.js";
 import check from "./check.js";
@@ -20,9 +21,10 @@ function synthString(ast) {
 
 function synthObject(ast) {
   const properties = ast.properties.map(prop => {
-    if (prop.type !== "ObjectProperty") bug(`unimplemented ${prop.type}`);
+    if (!AST.isObjectProperty(prop)) bug(`unimplemented ${prop.type}`);
+    if (!AST.isIdentifier(prop.key)) bug(`unimplemented ${prop.key.type}`);
+    if (!AST.isExpression(prop.value)) bug(`unimplemented ${prop.value.type}`);
     if (prop.computed) bug(`unimplemented computed`);
-    if (prop.key.type !== "Identifier") bug(`unimplemented ${prop.key.type}`);
     return {
       name: prop.key.name,
       type: synth(prop.value)
@@ -32,16 +34,14 @@ function synthObject(ast) {
 }
 
 function synthMember(ast) {
-  if (ast.computed) bug(`unimplemented computed`);
   const prop = ast.property;
-  if (prop.type !== "Identifier") bug(`unimplemented ${prop.type}`);
+  if (!AST.isIdentifier(prop)) bug(`unimplemented ${prop.type}`);
+  if (ast.computed) bug(`unimplemented computed`);
   const object = synth(ast.object);
-  if (object.type !== "Object") err(". expects object", ast.object);
-  const typeProp = object.properties.find(({
-    name: typeName
-  }) => typeName === prop.name);
-  if (!typeProp) err(`no such property ${prop.name}`, prop);
-  return typeProp.type;
+  if (!Type.isObject(object)) err(". expects object", ast.object);
+  const type = Type.propType(object, prop.name);
+  if (!type) err(`no such property ${prop.name}`, prop);
+  return type;
 }
 
 function synthTSAs(ast) {
