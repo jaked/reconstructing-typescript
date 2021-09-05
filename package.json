@@ -1,5 +1,5 @@
 {
-  "name": "part1",
+  "name": "part2",
   "private": true,
   "dependencies": {
     "@babel/generator": "^7.15.0",
