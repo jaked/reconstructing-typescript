@@ -1,0 +1,24 @@
+[submodule "parts/part1"]
+	path = parts/part1
+	url = ./
+	branch = part1
+[submodule "parts/part2"]
+	path = parts/part2
+	url = ./
+	branch = part2
+[submodule "parts/part3"]
+	path = parts/part3
+	url = ./
+	branch = part3
+[submodule "parts/part4"]
+	path = parts/part4
+	url = ./
+	branch = part4
+[submodule "parts/part5"]
+	path = parts/part5
+	url = ./
+	branch = part5
+[submodule "parts/part6"]
+	path = parts/part6
+	url = ./
+	branch = part6
