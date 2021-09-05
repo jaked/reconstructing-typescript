@@ -1,38 +1,37 @@
+import * as AST from "../../_snowpack/pkg/@babel/types.js";
 import { bug } from "../util/err.js";
 import Type from "../type/index.js";
 import synth from "./synth.js";
 export function narrowType(a, b) {
-  if (a.type === "Never" || b.type === "Never") return Type.never;
-  if (a.type === "Unknown") return b;
-  if (b.type === "Unknown") return a;
-  if (a.type === "Null" && b.type === "Null") return a;
-  if (a.type === "Boolean" && b.type === "Boolean") return a;
-  if (a.type === "Number" && b.type === "Number") return a;
-  if (a.type === "String" && b.type === "String") return a;
-  if (a.type === "Union") return Type.union(...a.types.map(a2 => narrowType(a2, b)));
-  if (b.type === "Union") return Type.union(...b.types.map(b2 => narrowType(a, b2)));
-  if (a.type === "Intersection") return Type.intersection(...a.types.map(a2 => narrowType(a2, b)));
-  if (b.type === "Intersection") return Type.intersection(...b.types.map(b2 => narrowType(a, b2)));
+  if (Type.isNever(a) || Type.isNever(b)) return Type.never;
+  if (Type.isUnknown(a)) return b;
+  if (Type.isUnknown(b)) return a;
+  if (Type.isNull(a) && Type.isNull(b)) return a;
+  if (Type.isBoolean(a) && Type.isBoolean(b)) return a;
+  if (Type.isNumber(a) && Type.isNumber(b)) return a;
+  if (Type.isString(a) && Type.isString(b)) return a;
+  if (Type.isUnion(a)) return Type.union(...a.types.map(a2 => narrowType(a2, b)));
+  if (Type.isUnion(b)) return Type.union(...b.types.map(b2 => narrowType(a, b2)));
+  if (Type.isIntersection(a)) return Type.intersection(...a.types.map(a2 => narrowType(a2, b)));
+  if (Type.isIntersection(b)) return Type.intersection(...b.types.map(b2 => narrowType(a, b2)));
 
-  if (b.type === "Not") {
-    if (Type.equiv(a, b.base)) return Type.never;else if (a.type === "Boolean" && b.base.type === "Singleton" && b.base.base.type == "Boolean") {
+  if (Type.isNot(b)) {
+    if (Type.equiv(a, b.base)) return Type.never;else if (Type.isBoolean(a) && Type.isSingleton(b.base) && Type.isBoolean(b.base.base)) {
       if (b.base.value === true) return Type.singleton(false);else return Type.singleton(true);
     } else return a;
   }
 
-  if (a.type === "Singleton" && b.type === "Singleton") return a.value === b.value ? a : Type.never;
-  if (a.type === "Singleton") return a.base.type === b.type ? a : Type.never;
-  if (b.type === "Singleton") return b.base.type === a.type ? b : Type.never;
+  if (Type.isSingleton(a) && Type.isSingleton(b)) return a.value === b.value ? a : Type.never;
+  if (Type.isSingleton(a)) return a.base.type === b.type ? a : Type.never;
+  if (Type.isSingleton(b)) return b.base.type === a.type ? b : Type.never;
 
-  if (a.type === "Object" && b.type === "Object") {
+  if (Type.isObject(a) && Type.isObject(b)) {
     const properties = a.properties.map(({
       name,
       type: aType
     }) => {
-      const bProp = b.properties.find(({
-        name: bName
-      }) => bName === name);
-      const type = bProp ? narrowType(aType, bProp.type) : aType;
+      const bType = Type.propType(b, name);
+      const type = bType ? narrowType(aType, bType) : aType;
       return {
         name,
         type
@@ -40,7 +39,7 @@ export function narrowType(a, b) {
     }, {});
     if (properties.some(({
       type
-    }) => type.type === "Never")) return Type.never;else return Type.object(properties);
+    }) => Type.isNever(type))) return Type.never;else return Type.object(properties);
   }
 
   return Type.never;
@@ -55,7 +54,7 @@ function narrowPathIdentifier(env, ast, otherType) {
 
 function narrowPathMember(env, ast, otherType) {
   if (ast.computed) bug(`unimplemented computed`);
-  if (ast.property.type !== "Identifier") bug(`unexpected ${ast.property.type}`);
+  if (!AST.isIdentifier(ast.property)) bug(`unexpected ${ast.property.type}`);
   return narrowPath(env, ast.object, Type.object({
     [ast.property.name]: otherType
   }));
@@ -67,7 +66,7 @@ function narrowPathUnary(env, ast, otherType) {
       return env;
 
     case "typeof":
-      if (otherType.type === "Singleton") {
+      if (Type.isSingleton(otherType)) {
         switch (otherType.value) {
           case "boolean":
             return narrowPath(env, ast.argument, Type.boolean);
@@ -84,7 +83,7 @@ function narrowPathUnary(env, ast, otherType) {
           default:
             return env;
         }
-      } else if (otherType.type === "Not" && otherType.base.type === "Singleton") {
+      } else if (Type.isNot(otherType) && Type.isSingleton(otherType.base)) {
         switch (otherType.base.value) {
           case "boolean":
             return narrowPath(env, ast.argument, Type.not(Type.boolean));
@@ -161,6 +160,7 @@ function narrowLogical(env, ast, assume) {
 }
 
 function narrowBinary(env, ast, assume) {
+  if (!AST.isExpression(ast.left)) bug(`unimplemented ${ast.left.type}`);
   const left = synth(env, ast.left);
   const right = synth(env, ast.right);
 

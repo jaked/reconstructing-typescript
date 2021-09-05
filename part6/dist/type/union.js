@@ -1,5 +1,6 @@
 import { isPrimitiveSubtype, equiv } from "./isSubtype.js";
 import { never } from "./constructors.js";
+import { isUnion } from "./validators.js";
 
 function collapseRedundant(xs) {
   let accum = [];
@@ -15,7 +16,7 @@ function collapseRedundant(xs) {
 function flatten(types) {
   const accum = [];
   types.forEach(t => {
-    if (t.type === "Union") accum.push(...t.types);else accum.push(t);
+    if (isUnion(t)) accum.push(...t.types);else accum.push(t);
   });
   return accum;
 }
@@ -24,7 +25,7 @@ export function distributeUnion(xs) {
   function dist(prefix, suffix, accum2) {
     if (suffix.length === 0) {
       accum2.push(prefix);
-    } else if (suffix[0].type === "Union") {
+    } else if (isUnion(suffix[0])) {
       const suffix2 = suffix.slice(1);
       return suffix[0].types.forEach(y => dist([...prefix, y], suffix2, accum2));
     } else {

@@ -1,3 +1,4 @@
+import * as AST from "../../_snowpack/pkg/@babel/types.js";
 import { bug, err } from "../util/err.js";
 import Type from "../type/index.js";
 import check from "./check.js";
@@ -27,9 +28,10 @@ function synthString(env, ast) {
 
 function synthObject(env, ast) {
   const properties = ast.properties.map(prop => {
-    if (prop.type !== "ObjectProperty") bug(`unimplemented ${prop.type}`);
+    if (!AST.isObjectProperty(prop)) bug(`unimplemented ${prop.type}`);
+    if (!AST.isIdentifier(prop.key)) bug(`unimplemented ${prop.key.type}`);
+    if (!AST.isExpression(prop.value)) bug(`unimplemented ${prop.value.type}`);
     if (prop.computed) bug(`unimplemented computed`);
-    if (prop.key.type !== "Identifier") bug(`unimplemented ${prop.key.type}`);
     return {
       name: prop.key.name,
       type: synth(env, prop.value)
@@ -39,16 +41,14 @@ function synthObject(env, ast) {
 }
 
 function synthMember(env, ast) {
-  if (ast.computed) bug(`unimplemented computed`);
   const prop = ast.property;
-  if (prop.type !== "Identifier") bug(`unimplemented ${prop.type}`);
+  if (!AST.isIdentifier(prop)) bug(`unimplemented ${prop.type}`);
+  if (ast.computed) bug(`unimplemented computed`);
   return synthAndThen(env, ast.object, object => {
-    if (object.type !== "Object") err(". expects object", ast.object);
-    const typeProp = object.properties.find(({
-      name: typeName
-    }) => typeName === prop.name);
-    if (!typeProp) err(`no such property ${prop.name}`, prop);
-    return typeProp.type;
+    if (!Type.isObject(object)) err(". expects object", ast.object);
+    const type = Type.propType(object, prop.name);
+    if (!type) err(`no such property ${prop.name}`, prop);
+    return type;
   });
 }
 
@@ -59,10 +59,12 @@ function synthTSAs(env, ast) {
 }
 
 function synthFunction(env, ast) {
+  const body = ast.body;
+  if (!AST.isExpression(body)) bug(`unimplemented ${body.type}`);
   const params = ast.params.map(param => {
-    if (param.type !== "Identifier") bug(`unimplemented ${param.type}`);
+    if (!AST.isIdentifier(param)) bug(`unimplemented ${param.type}`);
     if (!param.typeAnnotation) err(`type required for '${param.name}'`, param);
-    if (param.typeAnnotation.type !== "TSTypeAnnotation") bug(`unimplemented ${param.type}`);
+    if (!AST.isTSTypeAnnotation(param.typeAnnotation)) bug(`unimplemented ${param.type}`);
     return {
       name: param.name,
       type: Type.ofTSType(param.typeAnnotation.typeAnnotation)
@@ -76,30 +78,35 @@ function synthFunction(env, ast) {
     const bodyEnv = params.reduce((env2, {
       name
     }, i) => env2.set(name, types[i]), env);
-    const ret = synth(bodyEnv, ast.body);
+    const ret = synth(bodyEnv, body);
     return Type.functionType(types, ret);
   });
   return Type.intersection(...funcTypes);
 }
 
 function synthCall(env, ast) {
+  if (!AST.isExpression(ast.callee)) bug(`unimplemented ${ast.callee.type}`);
   return synthAndThen(env, ast.callee, callee => {
-    if (callee.type !== "Function") err(`call expects function`, ast.callee);
+    if (!Type.isFunction(callee)) err(`call expects function`, ast.callee);
     if (callee.args.length !== ast.arguments.length) err(`expected ${callee.args.length} args, got ${ast.arguments.length} args`, ast);
-    callee.args.forEach((arg, i) => {
-      check(env, ast.arguments[i], arg);
+    callee.args.forEach((type, i) => {
+      const arg = ast.arguments[i];
+      if (!AST.isExpression(arg)) bug(`unimplemented ${arg.type}`);
+      check(env, arg, type);
     });
     return callee.ret;
   });
 }
 
 function synthBinary(env, ast) {
+  if (!AST.isExpression(ast.left)) bug(`unimplemented ${ast.left.type}`);
+
   switch (ast.operator) {
     case "+":
       return synthAndThen(env, ast.left, left => {
         return synthAndThen(env, ast.right, right => {
-          if (left.type === "Singleton" && right.type === "Singleton") {
-            if (left.base.type === "Number" && right.base.type === "Number") {
+          if (Type.isSingleton(left) && Type.isSingleton(right)) {
+            if (Type.isNumber(left.base) && Type.isNumber(right.base)) {
               if (typeof left.value !== "number" || typeof right.value !== "number") bug("unexpected value");
               return Type.singleton(left.value + right.value);
             } else {
@@ -114,14 +121,14 @@ function synthBinary(env, ast) {
     case "===":
       return synthAndThen(env, ast.left, left => {
         return synthAndThen(env, ast.right, right => {
-          if (left.type === "Singleton" && right.type === "Singleton") return Type.singleton(left.value === right.value);else return Type.boolean;
+          if (Type.isSingleton(left) && Type.isSingleton(right)) return Type.singleton(left.value === right.value);else return Type.boolean;
         });
       });
 
     case "!==":
       return synthAndThen(env, ast.left, left => {
         return synthAndThen(env, ast.right, right => {
-          if (left.type === "Singleton" && right.type === "Singleton") return Type.singleton(left.value !== right.value);else return Type.boolean;
+          if (Type.isSingleton(left) && Type.isSingleton(right)) return Type.singleton(left.value !== right.value);else return Type.boolean;
         });
       });
 
@@ -204,32 +211,25 @@ function synthConditional(env, ast) {
 }
 
 function andThen(type, fn) {
-  switch (type.type) {
-    case "Union":
-      return Type.union(...type.types.map(type2 => andThen(type2, fn)));
-
-    case "Intersection":
-      {
-        let error = void 0;
-        const intersection = Type.intersection(...type.types.map(type2 => {
-          try {
-            return fn(type2);
-          } catch (e) {
-            if (!error) error = e;
-            return Type.unknown;
-          }
-        }));
-
-        if (intersection.type === "Unknown") {
-          if (!error) bug("expected defined error");
-          throw error;
-        } else {
-          return intersection;
-        }
+  if (Type.isUnion(type)) return Type.union(...type.types.map(type2 => andThen(type2, fn)));else if (Type.isIntersection(type)) {
+    let error = void 0;
+    const intersection = Type.intersection(...type.types.map(type2 => {
+      try {
+        return fn(type2);
+      } catch (e) {
+        if (!error) error = e;
+        return Type.unknown;
       }
+    }));
 
-    default:
-      return fn(type);
+    if (Type.isUnknown(intersection)) {
+      if (!error) bug("expected defined error");
+      throw error;
+    } else {
+      return intersection;
+    }
+  } else {
+    return fn(type);
   }
 }
 
