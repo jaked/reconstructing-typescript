@@ -1,0 +1,13 @@
+{
+  "name": "reconstructing-typescript",
+  "private": true,
+  "devDependencies": {
+    "lerna": "^4.0.0"
+  },
+  "scripts": {
+    "bootstrap": "lerna bootstrap",
+    "test": "lerna run test --stream",
+    "build": "lerna run build",
+    "deploy": "lerna run deploy --concurrency 1"
+  }
+}
