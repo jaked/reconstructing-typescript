@@ -1,5 +1,6 @@
 import { isPrimitiveSubtype, equiv } from "./isSubtype.js";
 import { never } from "./constructors.js";
+import { isUnion } from "./validators.js";
 
 function collapseRedundant(xs) {
   let accum = [];
@@ -15,7 +16,7 @@ function collapseRedundant(xs) {
 function flatten(types) {
   const accum = [];
   types.forEach(t => {
-    if (t.type === "Union") accum.push(...t.types);else accum.push(t);
+    if (isUnion(t)) accum.push(...t.types);else accum.push(t);
   });
   return accum;
 }

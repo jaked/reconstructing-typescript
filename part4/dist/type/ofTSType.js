@@ -1,3 +1,4 @@
+import * as AST from "../../_snowpack/pkg/@babel/types.js";
 import { bug } from "../util/err.js";
 import * as Type from "./constructors.js";
 import union from "./union.js";
@@ -24,8 +25,8 @@ export default function ofTSType(tsType) {
     case "TSTypeLiteral":
       {
         const props = tsType.members.map(mem => {
-          if (mem.type !== "TSPropertySignature") bug(`unimplemented ${mem.type}`);
-          if (mem.key.type !== "Identifier") bug(`unimplemented ${mem.key.type}`);
+          if (!AST.isTSPropertySignature(mem)) bug(`unimplemented ${mem.type}`);
+          if (!AST.isIdentifier(mem.key)) bug(`unimplemented ${mem.key.type}`);
           if (!mem.typeAnnotation) bug(`expected type for ${mem.key.name}`);
           return {
             name: mem.key.name,
@@ -38,9 +39,9 @@ export default function ofTSType(tsType) {
     case "TSFunctionType":
       {
         const args = tsType.parameters.map(param => {
-          if (param.type !== "Identifier") bug(`unimplemented ${param.type}`);
+          if (!AST.isIdentifier(param)) bug(`unimplemented ${param.type}`);
           if (!param.typeAnnotation) bug(`expected type for ${param.name}`);
-          if (param.typeAnnotation.type !== "TSTypeAnnotation") bug(`unimplemented ${param.typeAnnotation.type}`);
+          if (!AST.isTSTypeAnnotation(param.typeAnnotation)) bug(`unimplemented ${param.typeAnnotation.type}`);
           return ofTSType(param.typeAnnotation.typeAnnotation);
         });
         if (!tsType.typeAnnotation) bug(`expected return type`);
