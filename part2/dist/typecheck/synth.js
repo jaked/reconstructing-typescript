@@ -1,3 +1,4 @@
+import * as AST from "../../_snowpack/pkg/@babel/types.js";
 import { bug, err } from "../util/err.js";
 import Type from "../type/index.js";
 import check from "./check.js";
@@ -26,9 +27,10 @@ function synthString(env, ast) {
 
 function synthObject(env, ast) {
   const properties = ast.properties.map(prop => {
-    if (prop.type !== "ObjectProperty") bug(`unimplemented ${prop.type}`);
+    if (!AST.isObjectProperty(prop)) bug(`unimplemented ${prop.type}`);
+    if (!AST.isIdentifier(prop.key)) bug(`unimplemented ${prop.key.type}`);
+    if (!AST.isExpression(prop.value)) bug(`unimplemented ${prop.value.type}`);
     if (prop.computed) bug(`unimplemented computed`);
-    if (prop.key.type !== "Identifier") bug(`unimplemented ${prop.key.type}`);
     return {
       name: prop.key.name,
       type: synth(env, prop.value)
@@ -38,16 +40,14 @@ function synthObject(env, ast) {
 }
 
 function synthMember(env, ast) {
-  if (ast.computed) bug(`unimplemented computed`);
   const prop = ast.property;
-  if (prop.type !== "Identifier") bug(`unimplemented ${prop.type}`);
+  if (!AST.isIdentifier(prop)) bug(`unimplemented ${prop.type}`);
+  if (ast.computed) bug(`unimplemented computed`);
   const object = synth(env, ast.object);
-  if (object.type !== "Object") err(". expects object", ast.object);
-  const typeProp = object.properties.find(({
-    name: typeName
-  }) => typeName === prop.name);
-  if (!typeProp) err(`no such property ${prop.name}`, prop);
-  return typeProp.type;
+  if (!Type.isObject(object)) err(". expects object", ast.object);
+  const type = Type.propType(object, prop.name);
+  if (!type) err(`no such property ${prop.name}`, prop);
+  return type;
 }
 
 function synthTSAs(env, ast) {
@@ -57,17 +57,17 @@ function synthTSAs(env, ast) {
 }
 
 function synthFunction(env, ast) {
+  if (!AST.isExpression(ast.body)) bug(`unimplemented ${ast.body.type}`);
   const argTypes = ast.params.map(param => {
-    if (param.type !== "Identifier") bug(`unimplemented ${param.type}`);
+    if (!AST.isIdentifier(param)) bug(`unimplemented ${param.type}`);
     if (!param.typeAnnotation) err(`type required for '${param.name}'`, param);
-    if (param.typeAnnotation.type !== "TSTypeAnnotation") bug(`unimplemented ${param.type}`);
+    if (!AST.isTSTypeAnnotation(param.typeAnnotation)) bug(`unimplemented ${param.type}`);
     return {
       name: param.name,
       type: Type.ofTSType(param.typeAnnotation.typeAnnotation)
     };
   });
   const args = argTypes.map(({
-    name,
     type
   }) => type);
   const bodyEnv = argTypes.reduce((env2, {
@@ -79,11 +79,14 @@ function synthFunction(env, ast) {
 }
 
 function synthCall(env, ast) {
+  if (!AST.isExpression(ast.callee)) bug(`expected ${ast.callee.type}`);
   const callee = synth(env, ast.callee);
-  if (callee.type !== "Function") err(`call expects function`, ast.callee);
+  if (!Type.isFunction(callee)) err(`call expects function`, ast.callee);
   if (callee.args.length !== ast.arguments.length) err(`expected ${callee.args.length} args, got ${ast.arguments.length} args`, ast);
-  callee.args.forEach((arg, i) => {
-    check(env, ast.arguments[i], arg);
+  callee.args.forEach((type, i) => {
+    const arg = ast.arguments[i];
+    if (!AST.isExpression(arg)) bug(`unimplemented ${arg.type}`);
+    check(env, arg, type);
   });
   return callee.ret;
 }
