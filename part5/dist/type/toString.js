@@ -1,3 +1,4 @@
+import { isFunction, isString } from "./validators.js";
 export default function toString(type) {
   switch (type.type) {
     case "Never":
@@ -34,18 +35,18 @@ export default function toString(type) {
       }
 
     case "Singleton":
-      if (type.base.type === "String") return `'${type.value}'`;else return `${type.value}`;
+      if (isString(type.base)) return `'${type.value}'`;else return `${type.value}`;
 
     case "Union":
       return type.types.map(type2 => {
         const typeString = toString(type2);
-        if (type2.type === "Function") return `(${typeString})`;else return typeString;
+        if (isFunction(type2)) return `(${typeString})`;else return typeString;
       }).join(" | ");
 
     case "Intersection":
       return type.types.map(type2 => {
         const typeString = toString(type2);
-        if (type2.type === "Function") return `(${typeString})`;else return typeString;
+        if (isFunction(type2)) return `(${typeString})`;else return typeString;
       }).join(" & ");
   }
 }
