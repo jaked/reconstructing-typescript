@@ -8,6 +8,17 @@ import { parseExpression } from './ast/parse';
 import synth from './typecheck/synth';
 import Type from './type';
 
+const examples = {
+  'primitive': '7',
+  'object': '{ foo: 7, bar: "baz" }',
+  'member': '{ foo: 7, bar: "baz" }.foo',
+  'check object': '{ foo: 7, bar: "baz" } as { foo: number, bar: string }',
+  'check object error': `{
+  x: 7,
+  y: { a: "foo", b: "bar" }.b
+} as { x: number, y: number }`
+}
+
 const ScrollBox: React.FunctionComponent<{ gridArea: string }> = ({ gridArea, children }) =>
   <div
     style={{
@@ -58,15 +69,22 @@ const App = () => {
       style={{
         display: "grid",
         gridTemplateColumns: "max-content 1fr",
-        gridTemplateRows: "1fr 1fr",
+        gridTemplateRows: "max-content 1fr 1fr",
         gridTemplateAreas: `
+          "examplesLabel examples"
           "editorLabel editor"
           "typeLabel type"
         `,
-        height: "300px",
-        width: "700px"
+        height: "100vh",
+        width: "100vw"
       }}
     >
+      <Label gridArea='examplesLabel'>examples</Label>
+      <div style={{ padding: '10px' }} gridArea='examples'>
+        {Object.entries(examples).map(([ label, code ]) =>
+          <button onClick={(e) => { setCode(code) }}>{label}</button>
+        )}
+      </div>
       <Label gridArea='editorLabel'>expression</Label>
       <ScrollBox gridArea={'editor'}>
         <Editor
