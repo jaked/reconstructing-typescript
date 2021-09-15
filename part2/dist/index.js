@@ -7,6 +7,16 @@ import { parseExpression } from "./ast/parse.js";
 import synth from "./typecheck/synth.js";
 import Type from "./type/index.js";
 import Env from "./typecheck/env.js";
+const examples = {
+  primitive: "7",
+  object: '{ foo: 7, bar: "baz" }',
+  member: '{ foo: 7, bar: "baz" }.foo',
+  "check object": '{ foo: 7, bar: "baz" } as { foo: number, bar: string }',
+  "check object error": `{
+  x: 7,
+  y: { a: "foo", b: "bar" }.b
+} as { x: number, y: number }`
+};
 
 const ScrollBox = ({
   gridArea,
@@ -65,15 +75,27 @@ const App = () => {
     style: {
       display: "grid",
       gridTemplateColumns: "max-content 1fr",
-      gridTemplateRows: "1fr 1fr",
+      gridTemplateRows: "max-content 1fr 1fr",
       gridTemplateAreas: `
+          "examplesLabel examples"
           "editorLabel editor"
           "typeLabel type"
         `,
-      height: "300px",
-      width: "700px"
+      height: "100vh",
+      width: "100vw"
     }
   }, /* @__PURE__ */React.createElement(Label, {
+    gridArea: "examplesLabel"
+  }, "examples"), /* @__PURE__ */React.createElement("div", {
+    style: {
+      padding: "10px"
+    },
+    gridArea: "examples"
+  }, Object.entries(examples).map(([label, code2]) => /* @__PURE__ */React.createElement("button", {
+    onClick: e => {
+      setCode(code2);
+    }
+  }, label))), /* @__PURE__ */React.createElement(Label, {
     gridArea: "editorLabel"
   }, "expression"), /* @__PURE__ */React.createElement(ScrollBox, {
     gridArea: "editor"
