@@ -13,7 +13,13 @@ export function bug(msg: string): never {
 
 export class Err extends Error {
   constructor(msg: string, public location?: string) {
-    super(location ? `${msg} at ${location}` : msg);
+    super(msg);
+  }
+
+  toString() {
+    if (this.location)
+      return `${this.message} at ${this.location}`
+    else return this.message;
   }
 }
 

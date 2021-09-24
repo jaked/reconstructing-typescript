@@ -1,8 +1,10 @@
 import * as AST from '@babel/types';
 import { bug, err } from '../util/err';
+import * as Trace from '../util/trace';
 import Type from '../type';
 import synth from './synth';
 
+const checkObject = Trace.instrument('checkObject',
 function checkObject(ast: AST.ObjectExpression, type: Type.Object) {
   const astProps: { name: string, expr: AST.Expression, key: AST.Identifier }[] =
     ast.properties.map(prop => {
@@ -28,8 +30,10 @@ function checkObject(ast: AST.ObjectExpression, type: Type.Object) {
     else err(`extra property ${name}`, key);
   });
 }
+);
 
-export default function check(ast: AST.Expression, type: Type) {
+const check = Trace.instrument('check',
+function check(ast: AST.Expression, type: Type) {
   if (AST.isObjectExpression(ast) && Type.isObject(type))
     return checkObject(ast, type);
 
@@ -37,3 +41,6 @@ export default function check(ast: AST.Expression, type: Type) {
   if (!Type.isSubtype(synthType, type))
     err(`expected ${Type.toString(type)}, got ${Type.toString(synthType)}`, ast);
 }
+);
+
+export default check;

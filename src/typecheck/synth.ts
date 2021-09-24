@@ -1,24 +1,34 @@
 import * as AST from '@babel/types';
 import { bug, err } from '../util/err';
+import * as Trace from '../util/trace';
 import Type from '../type';
 import check from './check';
 
-function synthNull(ast: AST.NullLiteral): Type {
+const synthNull = Trace.instrument('synthNull',
+function synthNull (ast: AST.NullLiteral): Type {
   return Type.nullType;
 }
+);
 
+const synthBoolean = Trace.instrument('synthBoolean',
 function synthBoolean(ast: AST.BooleanLiteral): Type {
   return Type.boolean;
 }
+);
 
-function synthNumber(ast: AST.NumericLiteral): Type {
+const synthNumber = Trace.instrument('synthNumber',
+function (ast: AST.NumericLiteral): Type {
   return Type.number;
 }
+);
 
+const synthString = Trace.instrument('synthString',
 function synthString(ast: AST.StringLiteral): Type {
   return Type.string;
 }
+);
 
+const synthObject = Trace.instrument('synthObject',
 function synthObject(ast: AST.ObjectExpression): Type {
   const properties =
     ast.properties.map(prop => {
@@ -33,7 +43,9 @@ function synthObject(ast: AST.ObjectExpression): Type {
     });
   return Type.object(properties);
 }
+);
 
+const synthMember = Trace.instrument('synthMember',
 function synthMember(ast: AST.MemberExpression): Type {
   const prop = ast.property;
   if (!AST.isIdentifier(prop)) bug(`unimplemented ${prop.type}`);
@@ -44,14 +56,18 @@ function synthMember(ast: AST.MemberExpression): Type {
   if (!type) err(`no such property ${prop.name}`, prop);
   return type;
 }
+);
 
+const synthTSAs = Trace.instrument('synthTSAs',
 function synthTSAs(ast: AST.TSAsExpression): Type {
   const type = Type.ofTSType(ast.typeAnnotation);
   check(ast.expression, type);
   return type;
 }
+);
 
-export default function synth(ast: AST.Expression): Type {
+const synth = Trace.instrument('synth',
+function synth(ast: AST.Expression): Type {
   switch (ast.type) {
     case 'NullLiteral':             return synthNull(ast);
     case 'BooleanLiteral':          return synthBoolean(ast);
@@ -64,3 +80,6 @@ export default function synth(ast: AST.Expression): Type {
     default: bug(`unimplemented ${ast.type}`);
   }
 }
+);
+
+export default synth

@@ -1,8 +1,10 @@
+import * as Trace from '../util/trace';
 import * as Types from './types';
 import propType from './propType';
 import * as Type from './validators';
 
-export default function isSubtype(a: Types.Type, b: Types.Type): boolean {
+const isSubtype = Trace.instrument('isSubtype',
+function isSubtype(a: Types.Type, b: Types.Type): boolean {
   if (Type.isNull(a) && Type.isNull(b)) return true;
   if (Type.isBoolean(a) && Type.isBoolean(b)) return true;
   if (Type.isNumber(a) && Type.isNumber(b)) return true;
@@ -18,3 +20,6 @@ export default function isSubtype(a: Types.Type, b: Types.Type): boolean {
 
   return false;
 }
+);
+
+export default isSubtype;

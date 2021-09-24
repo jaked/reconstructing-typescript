@@ -4,9 +4,10 @@ import Editor from 'react-simple-code-editor';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-typescript';
 
+import * as Trace from './util/trace';
 import { parseExpression } from './ast/parse';
 import synth from './typecheck/synth';
-import Type from './type';
+import CallTree from './callTree';
 
 const examples = {
   'primitive': '7',
@@ -54,14 +55,11 @@ const highlight = (code: string) =>
 const App = () => {
   const [code, setCode] = React.useState('');
 
-  let type: React.ReactNode = '';
   if (code.trim()) {
     try {
-      const __html = highlight(Type.toString(synth(parseExpression(code))));
-      type = <span dangerouslySetInnerHTML={{ __html }} />;
-    } catch (e) {
-      type = <span style={{ color: 'red' }}>{e.message}</span>;
-    }
+      Trace.resetCalls();
+      synth(parseExpression(code));
+    } catch (e) { }
   }
 
   return (
@@ -69,18 +67,18 @@ const App = () => {
       style={{
         display: "grid",
         gridTemplateColumns: "max-content 1fr",
-        gridTemplateRows: "max-content 1fr 1fr",
+        gridTemplateRows: "max-content 1fr 2fr",
         gridTemplateAreas: `
           "examplesLabel examples"
           "editorLabel editor"
-          "typeLabel type"
+          "traceLabel trace"
         `,
         height: "100vh",
         width: "100vw"
       }}
     >
       <Label gridArea='examplesLabel'>examples</Label>
-      <div style={{ padding: '10px' }} gridArea='examples'>
+      <div style={{ padding: '10px', gridArea: 'examples' }}>
         {Object.entries(examples).map(([ label, code ]) =>
           <button onClick={(e) => { setCode(code) }}>{label}</button>
         )}
@@ -97,14 +95,9 @@ const App = () => {
           }}
         />
       </ScrollBox>
-      <Label gridArea='typeLabel'>type</Label>
-      <ScrollBox gridArea={'type'}>
-        <div style={{
-          fontFamily: "monospace",
-          fontSize: 14
-        }}>
-          {type}
-        </div>
+      <Label gridArea='traceLabel'>trace</Label>
+      <ScrollBox gridArea={'trace'}>
+        <CallTree key={code} calls={Trace.getCalls()} />
       </ScrollBox>
     </div>
   );
