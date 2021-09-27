@@ -71,9 +71,9 @@ const Call = ({ call } : { call: Trace.call }) => {
     </div>
     { expanded &&
       <div style={{
-        marginLeft: '5px',
-        borderLeft: `solid 2px ${hovered ? hoverColor : '#efefef'}`,
-        paddingLeft: '5px'
+        marginLeft: '4px',
+        borderLeft: `solid 4px ${hovered ? hoverColor : '#efefef'}`,
+        paddingLeft: '4px'
       }}>
         <Calls calls={call.calls} />
       </div>

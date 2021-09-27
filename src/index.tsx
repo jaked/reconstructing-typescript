@@ -23,14 +23,13 @@ const examples = {
 const ScrollBox: React.FunctionComponent<{ gridArea: string }> = ({ gridArea, children }) =>
   <div
     style={{
-      backgroundColor: 'white',
       gridArea,
       overflow: "scroll",
       margin: "5px",
       padding: "10px",
       borderRadius: "10px",
       borderStyle: "solid",
-      borderWidth: "1px"
+      borderWidth: "1px",
     }}
   >
     {children}
@@ -40,10 +39,11 @@ const Label: React.FunctionComponent<{ gridArea: string }> = ({ gridArea, childr
   <div
     style={{
       gridArea,
-      justifySelf: "end",
+      justifySelf: "start",
       alignSelf: "center",
       fontFamily: "serif",
-      fontSize: "19px"
+      fontSize: "19px",
+      marginLeft: "5px",
     }}
   >
     {children}
@@ -66,12 +66,14 @@ const App = () => {
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "max-content 1fr",
-        gridTemplateRows: "max-content 1fr 2fr",
+        gridTemplateRows: "max-content max-content max-content 1fr max-content 3fr",
         gridTemplateAreas: `
-          "examplesLabel examples"
-          "editorLabel editor"
-          "traceLabel trace"
+          "examplesLabel"
+          "examples"
+          "editorLabel"
+          "editor"
+          "traceLabel"
+          "trace"
         `,
         height: "100vh",
         width: "100vw"
