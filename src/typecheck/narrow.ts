@@ -27,7 +27,7 @@ export function narrowType(a: Type, b: Type): Type {
     return Type.intersection(...b.types.map(b => narrowType(a, b)));
 
   if (Type.isNot(b)) {
-    if (Type.equiv(a, b.base)) return Type.never;
+    if (Type.isSubtype(a, b.base) && Type.isSubtype(b.base, a)) return Type.never;
     else if (Type.isBoolean(a) && Type.isSingleton(b.base) && Type.isBoolean(b.base.base)) {
       if (b.base.value === true) return Type.singleton(false);
       else return Type.singleton(true);
