@@ -69,13 +69,15 @@ describe('intersection', () => {
     expect(actual).toEqual(expected);
   });
 
-  it('does not collapse object subtypes', () => {
+  it('collapses object subtypes', () => {
     const actual =
       Type.intersection(
         Type.object({ foo: Type.string, bar: Type.boolean }),
         Type.object({ foo: Type.string, bar: Type.boolean, baz: Type.number })
       );
-    expect(actual.type).toBe('Intersection');
+      const expected =
+        Type.object({ foo: Type.string, bar: Type.boolean, baz: Type.number });
+      expect(actual).toEqual(expected);
   });
 
   it('distributes intersection over union', () => {

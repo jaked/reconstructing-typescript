@@ -97,7 +97,7 @@ function synthFunction(env: Env, ast: AST.ArrowFunctionExpression): Type {
   const funcTypes = argsLists.map(args => {
     const bodyEnv =
       bindings.reduce(
-        (env, { name, type }) => env.set(name, type),
+        (env, { name }, i) => env.set(name, args[i]),
         env
       );
     const ret = synth(bodyEnv, body);
