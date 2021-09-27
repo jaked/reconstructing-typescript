@@ -11,16 +11,18 @@ import Env from './typecheck/env';
 import CallTree from './callTree';
 
 const examples = {
-  'primitive': '7',
-  'object': '{ foo: 7, bar: "baz" }',
-  'member': '{ foo: 7, bar: "baz" }.foo',
-  'check object': '{ foo: 7, bar: "baz" } as { foo: number, bar: string }',
-  'check object error': `
-{
-  x: 7,
-  y: { a: "foo", b: "bar" }.b
-} as { x: number, y: number }
-`
+  'function': '(x: number, y: number) => ({ x, y })',
+  'variable error': '(x: number, y: number) => ({ x, y, z })',
+  'nested function': '(x: number) => (y: number) => ({ x, y })',
+  'check function': `
+((x: number, y: number) => ({ x, y })) as
+  (x: number, y: number) => { x: number, y: number }
+`,
+  'check function error': `
+((x: number, y: number) => ({ x, y })) as
+  (x: number, y: number) => { x: number, y: string }
+`,
+  'function argument': '((f: (x: number) => number, x: number) => f(f(x)))(x => x, 7)'
 }
 
 const ScrollBox: React.FunctionComponent<{ gridArea: string }> = ({ gridArea, children }) =>
