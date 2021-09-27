@@ -1,25 +1,21 @@
 import * as AST from "../../_snowpack/pkg/@babel/types.js";
 import { bug, err } from "../util/err.js";
+import * as Trace from "../util/trace.js";
 import Type from "../type/index.js";
 import check from "./check.js";
-
-function synthNull(ast) {
+const synthNull = Trace.instrument("synthNull", function synthNull2(ast) {
   return Type.nullType;
-}
-
-function synthBoolean(ast) {
+});
+const synthBoolean = Trace.instrument("synthBoolean", function synthBoolean2(ast) {
   return Type.boolean;
-}
-
-function synthNumber(ast) {
+});
+const synthNumber = Trace.instrument("synthNumber", function (ast) {
   return Type.number;
-}
-
-function synthString(ast) {
+});
+const synthString = Trace.instrument("synthString", function synthString2(ast) {
   return Type.string;
-}
-
-function synthObject(ast) {
+});
+const synthObject = Trace.instrument("synthObject", function synthObject2(ast) {
   const properties = ast.properties.map(prop => {
     if (!AST.isObjectProperty(prop)) bug(`unimplemented ${prop.type}`);
     if (!AST.isIdentifier(prop.key)) bug(`unimplemented ${prop.key.type}`);
@@ -31,9 +27,8 @@ function synthObject(ast) {
     };
   });
   return Type.object(properties);
-}
-
-function synthMember(ast) {
+});
+const synthMember = Trace.instrument("synthMember", function synthMember2(ast) {
   const prop = ast.property;
   if (!AST.isIdentifier(prop)) bug(`unimplemented ${prop.type}`);
   if (ast.computed) bug(`unimplemented computed`);
@@ -42,15 +37,13 @@ function synthMember(ast) {
   const type = Type.propType(object, prop.name);
   if (!type) err(`no such property ${prop.name}`, prop);
   return type;
-}
-
-function synthTSAs(ast) {
+});
+const synthTSAs = Trace.instrument("synthTSAs", function synthTSAs2(ast) {
   const type = Type.ofTSType(ast.typeAnnotation);
   check(ast.expression, type);
   return type;
-}
-
-export default function synth(ast) {
+});
+const synth = Trace.instrument("synth", function synth2(ast) {
   switch (ast.type) {
     case "NullLiteral":
       return synthNull(ast);
@@ -76,4 +69,5 @@ export default function synth(ast) {
     default:
       bug(`unimplemented ${ast.type}`);
   }
-}
+});
+export default synth;

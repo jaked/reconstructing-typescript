@@ -1,9 +1,9 @@
 import * as AST from "../../_snowpack/pkg/@babel/types.js";
 import { bug, err } from "../util/err.js";
+import * as Trace from "../util/trace.js";
 import Type from "../type/index.js";
 import synth from "./synth.js";
-
-function checkObject(ast, type) {
+const checkObject = Trace.instrument("checkObject", function checkObject2(ast, type) {
   const astProps = ast.properties.map(prop => {
     if (!AST.isObjectProperty(prop)) bug(`unimplemented ${prop.type}`);
     if (prop.computed) bug(`unimplemented computed`);
@@ -31,10 +31,10 @@ function checkObject(ast, type) {
     const propType = Type.propType(type, name);
     if (propType) check(expr, propType);else err(`extra property ${name}`, key);
   });
-}
-
-export default function check(ast, type) {
+});
+const check = Trace.instrument("check", function check2(ast, type) {
   if (AST.isObjectExpression(ast) && Type.isObject(type)) return checkObject(ast, type);
   const synthType = synth(ast);
   if (!Type.isSubtype(synthType, type)) err(`expected ${Type.toString(type)}, got ${Type.toString(synthType)}`, ast);
-}
+});
+export default check;

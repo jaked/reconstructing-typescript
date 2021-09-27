@@ -9,3 +9,7 @@ body {
 * {
   box-sizing: border-box;
 }
+
+.token.operator {
+  background: transparent;
+}
