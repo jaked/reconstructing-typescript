@@ -1,5 +1,11 @@
 import Type from '../type';
 
+type Env = {
+  get(name: string): Type | undefined;
+  set(name: string, type: Type): Env;
+  entries(): IterableIterator<[string, Type]>;
+}
+
 function Env(map: Map<string, Type> | { [name: string]: Type }): Env {
   if (map instanceof Map) {
     return {
@@ -11,12 +17,6 @@ function Env(map: Map<string, Type> | { [name: string]: Type }): Env {
   } else {
     return Env(new Map(Object.entries(map)));
   }
-}
-
-type Env = {
-  get(name: string): Type | undefined;
-  set(name: string, type: Type): Env;
-  entries(): IterableIterator<[string, Type]>;
 }
 
 module Env {

@@ -78,7 +78,7 @@ function synthTSAs(env: Env, ast: AST.TSAsExpression): Type {
 const synthFunction = Trace.instrument('synthFunction',
 function synthFunction(env: Env, ast: AST.ArrowFunctionExpression): Type {
   if (!AST.isExpression(ast.body)) bug(`unimplemented ${ast.body.type}`)
-  const argTypes = ast.params.map(param => {
+  const bindings = ast.params.map(param => {
     if (!AST.isIdentifier(param)) bug(`unimplemented ${param.type}`);
     if (!param.typeAnnotation) err(`type required for '${param.name}'`, param);
     if (!AST.isTSTypeAnnotation(param.typeAnnotation)) bug(`unimplemented ${param.type}`);
@@ -87,9 +87,9 @@ function synthFunction(env: Env, ast: AST.ArrowFunctionExpression): Type {
       type: Type.ofTSType(param.typeAnnotation.typeAnnotation),
     };
   });
-  const args = argTypes.map(({ type }) => type);
+  const args = bindings.map(({ type }) => type);
   const bodyEnv =
-    argTypes.reduce(
+    bindings.reduce(
       (env, { name, type }) => env.set(name, type),
       env
     );
@@ -100,7 +100,7 @@ function synthFunction(env: Env, ast: AST.ArrowFunctionExpression): Type {
 
 const synthCall = Trace.instrument('synthCall',
 function synthCall(env: Env, ast: AST.CallExpression): Type {
-  if (!AST.isExpression(ast.callee)) bug(`expected ${ast.callee.type}`);
+  if (!AST.isExpression(ast.callee)) bug(`unimplemented ${ast.callee.type}`);
   const callee = synth(env, ast.callee);
   if (!Type.isFunction(callee)) err(`call expects function`, ast.callee);
   if (callee.args.length !== ast.arguments.length)

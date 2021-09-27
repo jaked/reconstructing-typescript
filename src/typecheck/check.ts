@@ -38,13 +38,13 @@ function checkFunction(env: Env, ast: AST.ArrowFunctionExpression, type: Type.Fu
   if (!AST.isExpression(ast.body)) bug(`unimplemented ${ast.body.type}`)
   if (type.args.length != ast.params.length)
     err(`expected ${type.args.length} args, got ${ast.params.length} args`, ast);
-  const params = ast.params.map(param => {
+  const bindings = ast.params.map((param, i) => {
     if (!AST.isIdentifier(param)) bug(`unimplemented ${param.type}`);
-    return param.name;
+    return { name: param.name, type: type.args[i] };
   });
   const bodyEnv =
-    params.reduce(
-      (env, param, i) => env.set(param, type.args[i]),
+    bindings.reduce(
+      (env, { name, type }) => env.set(name, type),
       env
     );
   check(bodyEnv, ast.body, type.ret);
