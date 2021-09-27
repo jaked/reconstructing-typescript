@@ -12,7 +12,6 @@ import CallTree from './callTree';
 
 const examples = {
   'function': '(x: number, y: number) => ({ x, y })',
-  'variable error': '(x: number, y: number) => ({ x, y, z })',
   'nested function': '(x: number) => (y: number) => ({ x, y })',
   'check function': `
 ((x: number, y: number) => ({ x, y })) as
@@ -22,7 +21,9 @@ const examples = {
 ((x: number, y: number) => ({ x, y })) as
   (x: number, y: number) => { x: number, y: string }
 `,
-  'function argument': '((f: (x: number) => number, x: number) => f(f(x)))(x => x, 7)'
+  'call': '((v: { x: number }) => v.x)({ x: 7 })',
+  'call error': '((v: { x: number }) => v.x)({ x: true })',
+  'call with function argument': '((f: (x: number) => number, x: number) => f(f(x)))(x => x, 7)'
 }
 
 const ScrollBox: React.FunctionComponent<{ gridArea: string }> = ({ gridArea, children }) =>
