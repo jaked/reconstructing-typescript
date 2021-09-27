@@ -49,17 +49,30 @@ const Label: React.FunctionComponent<{ gridArea: string }> = ({ gridArea, childr
     {children}
   </div>
 
+const Error: React.FunctionComponent<{}> = ({ children }) =>
+  <span style={{
+    fontFamily: 'monospace',
+    fontSize: 14,
+    color: 'red',
+  }}>{children}</span>
+
 const highlight = (code: string) =>
   Prism.highlight(code, Prism.languages.typescript, 'typescript');
 
 const App = () => {
   const [code, setCode] = React.useState('');
 
+  let err: string | undefined;
   if (code.trim()) {
     try {
-      Trace.resetCalls();
-      synth(parseExpression(code));
-    } catch (e) { }
+      const ast = parseExpression(code);
+      try {
+        Trace.resetCalls();
+        synth(ast);
+      } catch (e) { }
+    } catch (e) {
+      err = String(e);
+    }
   }
 
   return (
@@ -99,7 +112,10 @@ const App = () => {
       </ScrollBox>
       <Label gridArea='traceLabel'>trace</Label>
       <ScrollBox gridArea={'trace'}>
-        <CallTree key={code} calls={Trace.getCalls()} />
+        {err ?
+          <Error>{err}</Error> :
+          <CallTree key={code} calls={Trace.getCalls()} />
+        }
       </ScrollBox>
     </div>
   );
