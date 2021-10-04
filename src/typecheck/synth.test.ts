@@ -172,6 +172,18 @@ describe('equality', () => {
       env
     );
   });
+
+  it('ok union', () => {
+    const env = Env({
+      x: Parse.parseType('7 | 9'),
+      y: Parse.parseType('9 | 11')
+    });
+    expectSynth(
+      'x === y',
+      'false | true',
+      env
+    );
+  });
 });
 
 describe('logical and', () => {
@@ -242,6 +254,18 @@ describe('logical or', () => {
       env
     );
   });
+
+  it('ok union', () => {
+    const env = Env({
+      x: Parse.parseType('boolean | 0'),
+      y: Parse.parseType('string | 7')
+    });
+    expectSynth(
+      'x || y',
+      'boolean | string | 7',
+      env
+    );
+  });
 });
 
 describe('not', () => {
@@ -290,6 +314,17 @@ describe('typeof', () => {
     expectSynth(
       'typeof x',
       '"number"',
+      env
+    );
+  });
+
+  it('ok union', () => {
+    const env = Env({
+      x: Parse.parseType('number | string | boolean')
+    });
+    expectSynth(
+      'typeof x',
+      '"number" | "string" | "boolean"',
       env
     );
   });
