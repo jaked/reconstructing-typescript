@@ -36,14 +36,6 @@ export type Function = {
 
 export type Singleton = {
   type: 'Singleton';
-  base: Boolean;
-  value: boolean;
-} | {
-  type: 'Singleton';
-  base: Number;
-  value: number;
-} | {
-  type: 'Singleton';
-  base: String;
-  value: string;
+  base: Boolean | Number | String;
+  value: unknown;
 }
