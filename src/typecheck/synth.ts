@@ -116,58 +116,100 @@ function synthCall(env: Env, ast: AST.CallExpression): Type {
 
 const synthBinary = Trace.instrument('synthBinary',
 function synthBinary(env: Env, ast: AST.BinaryExpression): Type {
-  if (ast.operator !== '+') bug(`unimplemented ${ast.operator}`);
   if (!AST.isExpression(ast.left)) bug(`unimplemented ${ast.left.type}`)
-
   const left = synth(env, ast.left);
   const right = synth(env, ast.right);
+  switch (ast.operator) {
+    case '===':
+      if (Type.isSingleton(left) && Type.isSingleton(right))
+        return Type.singleton(left.value === right.value);
+      else
+        return Type.boolean;
 
-  if (Type.isSingleton(left) && Type.isSingleton(right)) {
-    if (Type.isNumber(left.base) && Type.isNumber(right.base)) {
-      if (typeof left.value !== 'number' || typeof right.value !== 'number')
-        bug('unexpected value');
-      return Type.singleton(left.value + right.value);
-    } else {
-      err('+ expects numbers', ast);
+    case '!==':
+      if (Type.isSingleton(left) && Type.isSingleton(right))
+        return Type.singleton(left.value !== right.value);
+      else
+        return Type.boolean;
+
+    case '+': {
+      if (Type.isSingleton(left) && Type.isSingleton(right)) {
+        if (Type.isNumber(left.base) && Type.isNumber(right.base)) {
+          if (typeof left.value !== 'number' || typeof right.value !== 'number')
+            bug('unexpected value');
+          return Type.singleton(left.value + right.value);
+        } else {
+          err('+ expects numbers', ast);
+        }
+
+      } else {
+        if (Type.isSubtype(left, Type.number) && Type.isSubtype(right, Type.number))
+          return Type.number;
+        else
+          err('+ expects numbers', ast);
+      }
     }
 
-  } else {
-    if (Type.isSubtype(left, Type.number) && Type.isSubtype(right, Type.number))
-      return Type.number;
-    else
-      err('+ expects numbers', ast);
+    default: bug(`unimplemented ${ast.operator}`);
   }
 }
 );
 
 const synthLogical = Trace.instrument('synthLogical',
 function synthLogical(env: Env, ast: AST.LogicalExpression): Type {
-  if (ast.operator !== '&&') bug(`unimplemented ${ast.operator}`);
-
   const left = synth(env, ast.left);
   const right = synth(env, ast.right);
+  switch (ast.operator) {
+    case '&&':
+      if (Type.isFalsy(left))
+        return left;
+      else if (Type.isTruthy(left))
+        return right;
+      else
+        return Type.boolean; // should be union
 
-  if (Type.isFalsy(left))
-    return left;
-  else if (Type.isTruthy(left))
-    return right;
-  else
-    return Type.boolean; // should be union
+    case '||':
+      if (Type.isTruthy(left))
+        return left;
+      else if (Type.isFalsy(left))
+        return right;
+      else
+        return Type.boolean; // should be union
+
+    default: bug(`unimplemented ${ast.operator}`);
+  }
 }
 );
 
+function typeofType(type: Type): string {
+  switch (type.type) {
+    case 'Singleton': return typeofType(type.base);
+    case 'Boolean': return 'boolean';
+    case 'Function': return 'function';
+    case 'Null': return 'object';
+    case 'Number': return 'number';
+    case 'Object': return 'object';
+    case 'String': return 'string';
+  }
+}
+
 const synthUnary = Trace.instrument('synthUnary',
 function synthUnary(env: Env, ast: AST.UnaryExpression): Type {
-  if (ast.operator !== '!') bug(`unimplemented ${ast.operator}`);
-
   const argument = synth(env, ast.argument);
+  switch (ast.operator) {
+    case '!':
+      if (Type.isTruthy(argument))
+        return Type.singleton(false);
+      else if (Type.isFalsy(argument))
+        return Type.singleton(true);
+      else
+        return Type.boolean;
 
-  if (Type.isTruthy(argument))
-    return Type.singleton(false);
-  else if (Type.isFalsy(argument))
-    return Type.singleton(true);
-  else
-    return Type.boolean;
+    case 'typeof':
+      return Type.singleton(typeofType(argument));
+
+    default: bug(`unimplemented ${ast.operator}`);
+  }
 }
 );
 

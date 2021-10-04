@@ -119,6 +119,26 @@ describe('addition', () => {
   });
 });
 
+describe('equality', () => {
+  it('ok', () => {
+    const env = Env({ x: Type.number, y: Type.number });
+    expectSynth(
+      'x === y',
+      'boolean',
+      env
+    );
+  });
+
+  it('ok singleton', () => {
+    const env = Env({ x: Type.singleton(7), y: Type.singleton(9) });
+    expectSynth(
+      'x === y',
+      'false',
+      env
+    );
+  });
+});
+
 describe('logical and', () => {
   it('ok', () => {
     const env = Env({ x: Type.number, y: Type.string })
@@ -142,6 +162,35 @@ describe('logical and', () => {
     const env = Env({ x: Type.singleton(7), y: Type.string })
     expectSynth(
       'x && y',
+      'string',
+      env
+    );
+  });
+});
+
+describe('logical or', () => {
+  it('ok', () => {
+    const env = Env({ x: Type.number, y: Type.string })
+    expectSynth(
+      'x || y',
+      'boolean',
+      env
+    );
+  });
+
+  it('ok left truthy', () => {
+    const env = Env({ x: Type.singleton(7), y: Type.string })
+    expectSynth(
+      'x || y',
+      '7',
+      env
+    );
+  });
+
+  it('ok left falsy', () => {
+    const env = Env({ x: Type.singleton(0), y: Type.string })
+    expectSynth(
+      'x || y',
       'string',
       env
     );
@@ -172,6 +221,17 @@ describe('not', () => {
     expectSynth(
       '!x',
       'true',
+      env
+    );
+  });
+});
+
+describe('typeof', () => {
+  it('ok', () => {
+    const env = Env({ x: Type.number });
+    expectSynth(
+      'typeof x',
+      '"number"',
       env
     );
   });
