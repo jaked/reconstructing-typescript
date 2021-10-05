@@ -1,9 +1,9 @@
 import * as AST from "../../_snowpack/pkg/@babel/types.js";
 import { bug, err } from "../util/err.js";
+import * as Trace from "../util/trace.js";
 import Type from "../type/index.js";
 import synth from "./synth.js";
-
-function checkObject(env, ast, type) {
+const checkObject = Trace.instrument("checkObject", function checkObject2(env, ast, type) {
   const astProps = ast.properties.map(prop => {
     if (!AST.isObjectProperty(prop)) bug(`unimplemented ${prop.type}`);
     if (prop.computed) bug(`unimplemented computed`);
@@ -31,23 +31,28 @@ function checkObject(env, ast, type) {
     const propType = Type.propType(type, name);
     if (propType) check(env, expr, propType);
   });
-}
-
-function checkFunction(env, ast, type) {
+});
+const checkFunction = Trace.instrument("checkFunction", function checkFunction2(env, ast, type) {
   if (!AST.isExpression(ast.body)) bug(`unimplemented ${ast.body.type}`);
   if (type.args.length != ast.params.length) err(`expected ${type.args.length} args, got ${ast.params.length} args`, ast);
-  const params = ast.params.map(param => {
+  const bindings = ast.params.map((param, i) => {
     if (!AST.isIdentifier(param)) bug(`unimplemented ${param.type}`);
-    return param.name;
+    return {
+      name: param.name,
+      type: type.args[i]
+    };
   });
-  const bodyEnv = params.reduce((env2, param, i) => env2.set(param, type.args[i]), env);
+  const bodyEnv = bindings.reduce((env2, {
+    name,
+    type: type2
+  }) => env2.set(name, type2), env);
   check(bodyEnv, ast.body, type.ret);
-}
-
-export default function check(env, ast, type) {
-  if (Type.isIntersection(type)) return type.types.forEach(type2 => check(env, ast, type2));
+});
+const check = Trace.instrument("check", function check2(env, ast, type) {
+  if (Type.isIntersection(type)) return type.types.forEach(type2 => check2(env, ast, type2));
   if (AST.isObjectExpression(ast) && Type.isObject(type)) return checkObject(env, ast, type);
   if (AST.isArrowFunctionExpression(ast) && Type.isFunction(type)) return checkFunction(env, ast, type);
   const synthType = synth(env, ast);
   if (!Type.isSubtype(synthType, type)) err(`expected ${Type.toString(type)}, got ${Type.toString(synthType)}`, ast);
-}
+});
+export default check;

@@ -3,19 +3,19 @@ import ReactDOM from "https://cdn.skypack.dev/react-dom@^17.0.2";
 import Editor from "https://cdn.skypack.dev/react-simple-code-editor@^0.11.0";
 import Prism from "https://cdn.skypack.dev/prismjs@^1.24.1";
 import "../_snowpack/pkg/prismjs/components/prism-typescript.js";
+import * as Trace from "./util/trace.js";
 import { parseExpression } from "./ast/parse.js";
 import synth from "./typecheck/synth.js";
-import Type from "./type/index.js";
 import Env from "./typecheck/env.js";
+import CallTree from "./callTree.js";
 const examples = {
-  primitive: "7",
-  object: '{ foo: 7, bar: "baz" }',
-  member: '{ foo: 7, bar: "baz" }.foo',
-  "check object": '{ foo: 7, bar: "baz" } as { foo: number, bar: string }',
-  "check object error": `{
-  x: 7,
-  y: { a: "foo", b: "bar" }.b
-} as { x: number, y: number }`
+  function: "(x: number, y: number) => ({ x, y })",
+  "nested function": "(x: number) => (y: number) => ({ x, y })",
+  "check function": "((x: number, y: number) => ({ x, y })) as (x: number, y: number) => { x: number, y: number }",
+  "check function error": "((x: number, y: number) => ({ x, y })) as (x: number, y: number) => { x: number, y: string }",
+  call: "((v: { x: number }) => v.x)({ x: 7 })",
+  "call error": "((v: { x: number }) => v.x)({ x: true })",
+  "call with function argument": "((f: (x: number) => number, x: number) => f(f(x)))(x => x, 7)"
 };
 
 const ScrollBox = ({
@@ -23,7 +23,6 @@ const ScrollBox = ({
   children
 }) => /* @__PURE__ */React.createElement("div", {
   style: {
-    backgroundColor: "white",
     gridArea,
     overflow: "scroll",
     margin: "5px",
@@ -40,10 +39,21 @@ const Label = ({
 }) => /* @__PURE__ */React.createElement("div", {
   style: {
     gridArea,
-    justifySelf: "end",
+    justifySelf: "start",
     alignSelf: "center",
     fontFamily: "serif",
-    fontSize: "19px"
+    fontSize: "19px",
+    marginLeft: "5px"
+  }
+}, children);
+
+const Error = ({
+  children
+}) => /* @__PURE__ */React.createElement("span", {
+  style: {
+    fontFamily: "monospace",
+    fontSize: 14,
+    color: "red"
   }
 }, children);
 
@@ -51,35 +61,32 @@ const highlight = code => Prism.highlight(code, Prism.languages.typescript, "typ
 
 const App = () => {
   const [code, setCode] = React.useState("");
-  let type = "";
+  let err;
 
   if (code.trim()) {
     try {
-      const __html = highlight(Type.toString(synth(Env.empty, parseExpression(code))));
+      const ast = parseExpression(code);
 
-      type = /* @__PURE__ */React.createElement("span", {
-        dangerouslySetInnerHTML: {
-          __html
-        }
-      });
+      try {
+        Trace.resetCalls();
+        synth(Env.empty, ast);
+      } catch (e) {}
     } catch (e) {
-      type = /* @__PURE__ */React.createElement("span", {
-        style: {
-          color: "red"
-        }
-      }, e.message);
+      err = String(e);
     }
   }
 
   return /* @__PURE__ */React.createElement("div", {
     style: {
       display: "grid",
-      gridTemplateColumns: "max-content 1fr",
-      gridTemplateRows: "max-content 1fr 1fr",
+      gridTemplateRows: "max-content max-content max-content 1fr max-content 3fr",
       gridTemplateAreas: `
-          "examplesLabel examples"
-          "editorLabel editor"
-          "typeLabel type"
+          "examplesLabel"
+          "examples"
+          "editorLabel"
+          "editor"
+          "traceLabel"
+          "trace"
         `,
       height: "100vh",
       width: "100vw"
@@ -88,9 +95,9 @@ const App = () => {
     gridArea: "examplesLabel"
   }, "examples"), /* @__PURE__ */React.createElement("div", {
     style: {
-      padding: "10px"
-    },
-    gridArea: "examples"
+      padding: "10px",
+      gridArea: "examples"
+    }
   }, Object.entries(examples).map(([label, code2]) => /* @__PURE__ */React.createElement("button", {
     onClick: e => {
       setCode(code2);
@@ -108,15 +115,13 @@ const App = () => {
       fontSize: 14
     }
   })), /* @__PURE__ */React.createElement(Label, {
-    gridArea: "typeLabel"
-  }, "type"), /* @__PURE__ */React.createElement(ScrollBox, {
-    gridArea: "type"
-  }, /* @__PURE__ */React.createElement("div", {
-    style: {
-      fontFamily: "monospace",
-      fontSize: 14
-    }
-  }, type)));
+    gridArea: "traceLabel"
+  }, "trace"), /* @__PURE__ */React.createElement(ScrollBox, {
+    gridArea: "trace"
+  }, err ? /* @__PURE__ */React.createElement(Error, null, err) : /* @__PURE__ */React.createElement(CallTree, {
+    key: code,
+    calls: Trace.getCalls()
+  })));
 };
 
 ReactDOM.render( /* @__PURE__ */React.createElement(App, null), document.getElementById("app"));

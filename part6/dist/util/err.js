@@ -10,8 +10,12 @@ export function bug(msg) {
 }
 export class Err extends Error {
   constructor(msg, location) {
-    super(location ? `${msg} at ${location}` : msg);
+    super(msg);
     this.location = location;
+  }
+
+  toString() {
+    if (this.location) return `${this.message} at ${this.location}`;else return this.message;
   }
 
 }
