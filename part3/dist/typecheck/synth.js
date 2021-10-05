@@ -1,31 +1,26 @@
 import * as AST from "../../_snowpack/pkg/@babel/types.js";
 import { bug, err } from "../util/err.js";
+import * as Trace from "../util/trace.js";
 import Type from "../type/index.js";
 import check from "./check.js";
-
-function synthIdentifier(env, ast) {
+const synthIdentifier = Trace.instrument("synthIdentifier", function synthIdentifier2(env, ast) {
   const type = env.get(ast.name);
   if (!type) err(`unbound identifier '${ast.name}'`, ast);
   return type;
-}
-
-function synthNull(env, ast) {
+});
+const synthNull = Trace.instrument("synthNull", function synthNull2(env, ast) {
   return Type.nullType;
-}
-
-function synthBoolean(env, ast) {
+});
+const synthBoolean = Trace.instrument("synthBoolean", function synthBoolean2(env, ast) {
   return Type.singleton(ast.value);
-}
-
-function synthNumber(env, ast) {
+});
+const synthNumber = Trace.instrument("synthNumber", function synthNumber2(env, ast) {
   return Type.singleton(ast.value);
-}
-
-function synthString(env, ast) {
+});
+const synthString = Trace.instrument("synthString", function synthString2(env, ast) {
   return Type.singleton(ast.value);
-}
-
-function synthObject(env, ast) {
+});
+const synthObject = Trace.instrument("synthObject", function synthObject2(env, ast) {
   const properties = ast.properties.map(prop => {
     if (!AST.isObjectProperty(prop)) bug(`unimplemented ${prop.type}`);
     if (!AST.isIdentifier(prop.key)) bug(`unimplemented ${prop.key.type}`);
@@ -37,9 +32,8 @@ function synthObject(env, ast) {
     };
   });
   return Type.object(properties);
-}
-
-function synthMember(env, ast) {
+});
+const synthMember = Trace.instrument("synthMember", function synthMember2(env, ast) {
   const prop = ast.property;
   if (!AST.isIdentifier(prop)) bug(`unimplemented ${prop.type}`);
   if (ast.computed) bug(`unimplemented computed`);
@@ -48,17 +42,15 @@ function synthMember(env, ast) {
   const type = Type.propType(object, prop.name);
   if (!type) err(`no such property ${prop.name}`, prop);
   return type;
-}
-
-function synthTSAs(env, ast) {
+});
+const synthTSAs = Trace.instrument("synthTSAs", function synthTSAs2(env, ast) {
   const type = Type.ofTSType(ast.typeAnnotation);
   check(env, ast.expression, type);
   return type;
-}
-
-function synthFunction(env, ast) {
+});
+const synthFunction = Trace.instrument("synthFunction", function synthFunction2(env, ast) {
   if (!AST.isExpression(ast.body)) bug(`unimplemented ${ast.body.type}`);
-  const argTypes = ast.params.map(param => {
+  const bindings = ast.params.map(param => {
     if (!AST.isIdentifier(param)) bug(`unimplemented ${param.type}`);
     if (!param.typeAnnotation) err(`type required for '${param.name}'`, param);
     if (!AST.isTSTypeAnnotation(param.typeAnnotation)) bug(`unimplemented ${param.type}`);
@@ -67,19 +59,18 @@ function synthFunction(env, ast) {
       type: Type.ofTSType(param.typeAnnotation.typeAnnotation)
     };
   });
-  const args = argTypes.map(({
+  const args = bindings.map(({
     type
   }) => type);
-  const bodyEnv = argTypes.reduce((env2, {
+  const bodyEnv = bindings.reduce((env2, {
     name,
     type
   }) => env2.set(name, type), env);
   const ret = synth(bodyEnv, ast.body);
   return Type.functionType(args, ret);
-}
-
-function synthCall(env, ast) {
-  if (!AST.isExpression(ast.callee)) bug(`expected ${ast.callee.type}`);
+});
+const synthCall = Trace.instrument("synthCall", function synthCall2(env, ast) {
+  if (!AST.isExpression(ast.callee)) bug(`unimplemented ${ast.callee.type}`);
   const callee = synth(env, ast.callee);
   if (!Type.isFunction(callee)) err(`call expects function`, ast.callee);
   if (callee.args.length !== ast.arguments.length) err(`expected ${callee.args.length} args, got ${ast.arguments.length} args`, ast);
@@ -89,40 +80,93 @@ function synthCall(env, ast) {
     check(env, arg, type);
   });
   return callee.ret;
-}
-
-function synthBinary(env, ast) {
-  if (ast.operator !== "+") bug(`unimplemented ${ast.operator}`);
+});
+const synthBinary = Trace.instrument("synthBinary", function synthBinary2(env, ast) {
   if (!AST.isExpression(ast.left)) bug(`unimplemented ${ast.left.type}`);
   const left = synth(env, ast.left);
   const right = synth(env, ast.right);
 
-  if (Type.isSingleton(left) && Type.isSingleton(right)) {
-    if (Type.isNumber(left.base) && Type.isNumber(right.base)) {
-      if (typeof left.value !== "number" || typeof right.value !== "number") bug("unexpected value");
-      return Type.singleton(left.value + right.value);
-    } else {
-      err("+ expects numbers", ast);
-    }
-  } else {
-    if (Type.isSubtype(left, Type.number) && Type.isSubtype(right, Type.number)) return Type.number;else err("+ expects numbers", ast);
+  switch (ast.operator) {
+    case "===":
+      if (Type.isSingleton(left) && Type.isSingleton(right)) return Type.singleton(left.value === right.value);else return Type.boolean;
+
+    case "!==":
+      if (Type.isSingleton(left) && Type.isSingleton(right)) return Type.singleton(left.value !== right.value);else return Type.boolean;
+
+    case "+":
+      {
+        if (Type.isSingleton(left) && Type.isSingleton(right)) {
+          if (Type.isNumber(left.base) && Type.isNumber(right.base)) {
+            if (typeof left.value !== "number" || typeof right.value !== "number") bug("unexpected value");
+            return Type.singleton(left.value + right.value);
+          } else {
+            err("+ expects numbers", ast);
+          }
+        } else {
+          if (Type.isSubtype(left, Type.number) && Type.isSubtype(right, Type.number)) return Type.number;else err("+ expects numbers", ast);
+        }
+      }
+
+    default:
+      bug(`unimplemented ${ast.operator}`);
+  }
+});
+const synthLogical = Trace.instrument("synthLogical", function synthLogical2(env, ast) {
+  const left = synth(env, ast.left);
+  const right = synth(env, ast.right);
+
+  switch (ast.operator) {
+    case "&&":
+      if (Type.isFalsy(left)) return left;else if (Type.isTruthy(left)) return right;else return Type.boolean;
+
+    case "||":
+      if (Type.isTruthy(left)) return left;else if (Type.isFalsy(left)) return right;else return Type.boolean;
+
+    default:
+      bug(`unimplemented ${ast.operator}`);
+  }
+});
+
+function typeofType(type) {
+  switch (type.type) {
+    case "Singleton":
+      return typeofType(type.base);
+
+    case "Boolean":
+      return "boolean";
+
+    case "Function":
+      return "function";
+
+    case "Null":
+      return "object";
+
+    case "Number":
+      return "number";
+
+    case "Object":
+      return "object";
+
+    case "String":
+      return "string";
   }
 }
 
-function synthLogical(env, ast) {
-  if (ast.operator !== "&&") bug(`unimplemented ${ast.operator}`);
-  const left = synth(env, ast.left);
-  const right = synth(env, ast.right);
-  if (Type.isFalsy(left)) return left;else if (Type.isTruthy(left)) return right;else return Type.boolean;
-}
-
-function synthUnary(env, ast) {
-  if (ast.operator !== "!") bug(`unimplemented ${ast.operator}`);
+const synthUnary = Trace.instrument("synthUnary", function synthUnary2(env, ast) {
   const argument = synth(env, ast.argument);
-  if (Type.isTruthy(argument)) return Type.singleton(false);else if (Type.isFalsy(argument)) return Type.singleton(true);else return Type.boolean;
-}
 
-export default function synth(env, ast) {
+  switch (ast.operator) {
+    case "!":
+      if (Type.isTruthy(argument)) return Type.singleton(false);else if (Type.isFalsy(argument)) return Type.singleton(true);else return Type.boolean;
+
+    case "typeof":
+      return Type.singleton(typeofType(argument));
+
+    default:
+      bug(`unimplemented ${ast.operator}`);
+  }
+});
+const synth = Trace.instrument("synth", function synth2(env, ast) {
   switch (ast.type) {
     case "Identifier":
       return synthIdentifier(env, ast);
@@ -166,4 +210,5 @@ export default function synth(env, ast) {
     default:
       bug(`unimplemented ${ast.type}`);
   }
-}
+});
+export default synth;
