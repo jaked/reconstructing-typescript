@@ -11,19 +11,22 @@ import Env from './typecheck/env';
 import CallTree from './callTree';
 
 const examples = {
-  'function': '(x: number, y: number) => ({ x, y })',
-  'nested function': '(x: number) => (y: number) => ({ x, y })',
-  'check function': `
-((x: number, y: number) => ({ x, y })) as
-  (x: number, y: number) => { x: number, y: number }
+  '+': '7 + 9',
+  'typeof and ===': `typeof 'foo' === 'string'`,
+  '+ function': '(x: 7, y: 9) => x + y',
+  'check + function': `
+((x, y) => x + y) as
+  (x: 7, y: 9) => 16
 `,
-  'check function error': `
-((x: number, y: number) => ({ x, y })) as
-  (x: number, y: number) => { x: number, y: string }
+  'check + function error': `
+((x, y) => x + y + 1) as
+  (x: 7, y: 9) => 16
 `,
-  'call': '((v: { x: number }) => v.x)({ x: 7 })',
-  'call error': '((v: { x: number }) => v.x)({ x: true })',
-  'call with function argument': '((f: (x: number) => number, x: number) => f(f(x)))(x => x, 7)'
+  '&& function': '(x: 7, y: 9) => x && y',
+  'check && function': `
+((x, y) => x && y) as
+  (x: false, y: 'foo') => false
+`,
 }
 
 const ScrollBox: React.FunctionComponent<{ gridArea: string }> = ({ gridArea, children }) =>
