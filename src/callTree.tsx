@@ -7,6 +7,8 @@ import { bug } from './util/err';
 import print from './ast/print';
 import Type from './type';
 
+type Range = { start: number, end: number };
+
 const expression = (ast: AST.Expression) => {
   const __html = Prism.highlight(print(ast), Prism.languages.typescript, 'typescript');
   return <span dangerouslySetInnerHTML={{ __html }} />;
@@ -50,12 +52,28 @@ const Result = ({ call }: { call: Trace.call }) => {
 
 const hoverColor = 'hsl(220, 100%, 90%)'
 
-const Call = ({ call } : { call: Trace.call }) => {
+type CallProps = {
+  call: Trace.call;
+  setHoveredRange: (range: Range | null) => void;
+}
+
+const Call = ({ call, setHoveredRange } : CallProps) => {
   const [expanded, setExpanded] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
   const onClick = () => setExpanded(!expanded);
-  const onMouseEnter = () => setHovered(true);
-  const onMouseLeave = () => setHovered(false);
+  const onMouseEnter = () => {
+    if (call.name.startsWith('synth') || call.name.startsWith('check')) {
+      const expr = call.args[0] as AST.Expression;
+      if (expr.start !== null && expr.end !== null) {
+        setHoveredRange({ start: expr.start, end: expr.end })
+      }
+    }
+    setHovered(true);
+  }
+  const onMouseLeave = () => {
+    setHoveredRange(null);
+    setHovered(false);
+  }
 
   return <>
     <div
@@ -75,7 +93,7 @@ const Call = ({ call } : { call: Trace.call }) => {
         borderLeft: `solid 4px ${hovered ? hoverColor : '#efefef'}`,
         paddingLeft: '4px'
       }}>
-        <Calls calls={call.calls} />
+        <Calls calls={call.calls} setHoveredRange={setHoveredRange} />
       </div>
     }
     <div
@@ -89,15 +107,27 @@ const Call = ({ call } : { call: Trace.call }) => {
   </>;
 }
 
-export const Calls = ({ calls } : { calls: Trace.call[] }) => {
-  return <>{calls.map(call => <Call call={call} />)}</>;
+type CallsProps = {
+  calls: Trace.call[];
+  setHoveredRange: (range: Range | null) => void;
 }
 
-export default ({ calls } : { calls: Trace.call[] }) =>
+const Calls = ({ calls, setHoveredRange } : CallsProps) => {
+  return <>{
+    calls.map(call => <Call call={call} setHoveredRange={setHoveredRange} />)
+  }</>;
+}
+
+type Props = {
+  calls: Trace.call[];
+  setHoveredRange: (range: Range | null) => void;
+}
+
+export default ({ calls, setHoveredRange } : Props) =>
   <div style={{
     fontFamily: "monospace",
     fontSize: 14,
     whiteSpace: 'nowrap',
   }}>
-    <Calls calls={calls} />
+    <Calls calls={calls} setHoveredRange={setHoveredRange} />
   </div>

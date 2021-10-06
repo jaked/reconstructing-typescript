@@ -56,11 +56,60 @@ const Error: React.FunctionComponent<{}> = ({ children }) =>
     color: 'red',
   }}>{children}</span>
 
-const highlight = (code: string) =>
-  Prism.highlight(code, Prism.languages.typescript, 'typescript');
+type Range = { start: number, end: number };
+
+const hoverColor = 'hsl(220, 100%, 90%)';
+
+const highlightToken = (
+  token: string | Prism.Token | (string | Prism.Token)[],
+  offset: [number],
+  hoveredRange: Range | null
+): React.ReactNode => {
+  if (Array.isArray(token)) {
+    return token.map(token => highlightToken(token, offset, hoveredRange));
+
+  } else if (typeof token === 'string') {
+    const comps: React.ReactNode[] = [];
+    if (hoveredRange) {
+      const start = hoveredRange.start - offset[0];
+      const end = hoveredRange.end - offset[0];
+      if (Math.max(start, 0) < Math.min(end, token.length)) {
+        if (start > 0) {
+          comps.push(token.substring(0, start));
+        }
+        comps.push(
+          <span style={{ backgroundColor: hoverColor }}>{
+            token.substring(start, end)
+          }</span>
+        );
+        if (end < token.length) {
+          comps.push(token.substring(end));
+        }
+      } else {
+        comps.push(token);
+      }
+    } else {
+      comps.push(token);
+    }
+    offset[0] += token.length;
+    return comps;
+
+  } else {
+    const className = `token ${token.type}`;
+    const children = highlightToken(token.content, offset, hoveredRange);
+    return <span className={className}>{children}</span>
+  }
+}
+
+const highlight = (code: string, hovered: Range | null) => {
+  const tokens = Prism.tokenize(code, Prism.languages.typescript);
+  const offset: [number] = [0];
+  return tokens.map(token => highlightToken(token, offset, hovered));
+}
 
 const App = () => {
   const [code, setCode] = React.useState('');
+  const [hoveredRange, setHoveredRange] = React.useState<Range | null>(null);
 
   let err: string | undefined;
   if (code.trim()) {
@@ -101,7 +150,7 @@ const App = () => {
       <Label gridArea='editorLabel'>expression</Label>
       <ScrollBox gridArea={'editor'}>
         <Editor
-          highlight={highlight}
+          highlight={code => highlight(code, hoveredRange)}
           value={code}
           onValueChange={setCode}
           style={{
@@ -114,7 +163,7 @@ const App = () => {
       <ScrollBox gridArea={'trace'}>
         {err ?
           <Error>{err}</Error> :
-          <CallTree key={code} calls={Trace.getCalls()} />
+          <CallTree key={code} calls={Trace.getCalls()} setHoveredRange={setHoveredRange} />
         }
       </ScrollBox>
     </div>
