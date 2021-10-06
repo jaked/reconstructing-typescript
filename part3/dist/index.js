@@ -57,10 +57,59 @@ const Error = ({
   }
 }, children);
 
-const highlight = code => Prism.highlight(code, Prism.languages.typescript, "typescript");
+const hoverColor = "hsl(220, 100%, 90%)";
+
+const highlightToken = (token, offset, hoveredRange) => {
+  if (Array.isArray(token)) {
+    return token.map(token2 => highlightToken(token2, offset, hoveredRange));
+  } else if (typeof token === "string") {
+    const comps = [];
+
+    if (hoveredRange) {
+      const start = hoveredRange.start - offset[0];
+      const end = hoveredRange.end - offset[0];
+
+      if (Math.max(start, 0) < Math.min(end, token.length)) {
+        if (start > 0) {
+          comps.push(token.substring(0, start));
+        }
+
+        comps.push( /* @__PURE__ */React.createElement("span", {
+          style: {
+            backgroundColor: hoverColor
+          }
+        }, token.substring(start, end)));
+
+        if (end < token.length) {
+          comps.push(token.substring(end));
+        }
+      } else {
+        comps.push(token);
+      }
+    } else {
+      comps.push(token);
+    }
+
+    offset[0] += token.length;
+    return comps;
+  } else {
+    const className = `token ${token.type}`;
+    const children = highlightToken(token.content, offset, hoveredRange);
+    return /* @__PURE__ */React.createElement("span", {
+      className
+    }, children);
+  }
+};
+
+const highlight = (code, hovered) => {
+  const tokens = Prism.tokenize(code, Prism.languages.typescript);
+  const offset = [0];
+  return tokens.map(token => highlightToken(token, offset, hovered));
+};
 
 const App = () => {
   const [code, setCode] = React.useState("");
+  const [hoveredRange, setHoveredRange] = React.useState(null);
   let err;
 
   if (code.trim()) {
@@ -107,7 +156,7 @@ const App = () => {
   }, "expression"), /* @__PURE__ */React.createElement(ScrollBox, {
     gridArea: "editor"
   }, /* @__PURE__ */React.createElement(Editor, {
-    highlight,
+    highlight: code2 => highlight(code2, hoveredRange),
     value: code,
     onValueChange: setCode,
     style: {
@@ -120,7 +169,8 @@ const App = () => {
     gridArea: "trace"
   }, err ? /* @__PURE__ */React.createElement(Error, null, err) : /* @__PURE__ */React.createElement(CallTree, {
     key: code,
-    calls: Trace.getCalls()
+    calls: Trace.getCalls(),
+    setHoveredRange
   })));
 };
 
