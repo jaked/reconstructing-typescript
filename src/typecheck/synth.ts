@@ -132,23 +132,18 @@ function synthBinary(env: Env, ast: AST.BinaryExpression): Type {
       else
         return Type.boolean;
 
-    case '+': {
-      if (Type.isSingleton(left) && Type.isSingleton(right)) {
-        if (Type.isNumber(left.base) && Type.isNumber(right.base)) {
+    case '+':
+      if (Type.isSubtype(left, Type.number) && Type.isSubtype(right, Type.number)) {
+        if (Type.isSingleton(left) && Type.isSingleton(right)) {
           if (typeof left.value !== 'number' || typeof right.value !== 'number')
             bug('unexpected value');
           return Type.singleton(left.value + right.value);
         } else {
-          err('+ expects numbers', ast);
-        }
-
-      } else {
-        if (Type.isSubtype(left, Type.number) && Type.isSubtype(right, Type.number))
           return Type.number;
-        else
-          err('+ expects numbers', ast);
+        }
+      } else {
+        err('+ expects numbers', ast);
       }
-    }
 
     default: bug(`unimplemented ${ast.operator}`);
   }
