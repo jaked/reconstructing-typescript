@@ -107,7 +107,7 @@ const Call = ({ call, setHoveredRange } : CallProps) => {
   const onClick = () => setExpanded(!expanded);
   const onMouseEnter = () => {
     if (call.name.startsWith('synth') || call.name.startsWith('check')) {
-      const expr = call.args[0] as AST.Expression;
+      const expr = call.args[1] as AST.Expression;
       if (expr.start !== null && expr.end !== null) {
         setHoveredRange({ start: expr.start, end: expr.end })
       }
