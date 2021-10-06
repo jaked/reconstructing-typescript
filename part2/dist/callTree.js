@@ -96,16 +96,33 @@ const Result = ({
 const hoverColor = "hsl(220, 100%, 90%)";
 
 const Call = ({
-  call
+  call,
+  setHoveredRange
 }) => {
   const [expanded, setExpanded] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
 
   const onClick = () => setExpanded(!expanded);
 
-  const onMouseEnter = () => setHovered(true);
+  const onMouseEnter = () => {
+    if (call.name.startsWith("synth") || call.name.startsWith("check")) {
+      const expr = call.args[0];
 
-  const onMouseLeave = () => setHovered(false);
+      if (expr.start !== null && expr.end !== null) {
+        setHoveredRange({
+          start: expr.start,
+          end: expr.end
+        });
+      }
+    }
+
+    setHovered(true);
+  };
+
+  const onMouseLeave = () => {
+    setHoveredRange(null);
+    setHovered(false);
+  };
 
   return /* @__PURE__ */React.createElement(React.Fragment, null, /* @__PURE__ */React.createElement("div", {
     onClick,
@@ -129,7 +146,8 @@ const Call = ({
       paddingLeft: "4px"
     }
   }, /* @__PURE__ */React.createElement(Calls, {
-    calls: call.calls
+    calls: call.calls,
+    setHoveredRange
   })), /* @__PURE__ */React.createElement("div", {
     onClick,
     onMouseEnter,
@@ -142,15 +160,19 @@ const Call = ({
   })));
 };
 
-export const Calls = ({
-  calls
+const Calls = ({
+  calls,
+  setHoveredRange
 }) => {
   return /* @__PURE__ */React.createElement(React.Fragment, null, calls.map(call => /* @__PURE__ */React.createElement(Call, {
-    call
+    call,
+    setHoveredRange
   })));
 };
+
 export default (({
-  calls
+  calls,
+  setHoveredRange
 }) => /* @__PURE__ */React.createElement("div", {
   style: {
     fontFamily: "monospace",
@@ -158,5 +180,6 @@ export default (({
     whiteSpace: "nowrap"
   }
 }, /* @__PURE__ */React.createElement(Calls, {
-  calls
+  calls,
+  setHoveredRange
 })));
