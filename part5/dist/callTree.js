@@ -106,7 +106,7 @@ const Call = ({
 
   const onMouseEnter = () => {
     if (call.name.startsWith("synth") || call.name.startsWith("check")) {
-      const expr = call.args[0];
+      const expr = call.args[1];
 
       if (expr.start !== null && expr.end !== null) {
         setHoveredRange({
