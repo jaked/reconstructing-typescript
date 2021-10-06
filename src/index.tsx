@@ -111,12 +111,12 @@ const App = () => {
   const [code, setCode] = React.useState('');
   const [hoveredRange, setHoveredRange] = React.useState<Range | null>(null);
 
+  Trace.resetCalls();
   let err: string | undefined;
   if (code.trim()) {
     try {
       const ast = parseExpression(code);
       try {
-        Trace.resetCalls();
         synth(ast);
       } catch (e) { }
     } catch (e) {
@@ -155,7 +155,8 @@ const App = () => {
           onValueChange={setCode}
           style={{
             fontFamily: "monospace",
-            fontSize: 14
+            fontSize: 14,
+            minHeight: '100%',
           }}
         />
       </ScrollBox>
