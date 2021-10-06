@@ -110,6 +110,7 @@ const highlight = (code, hovered) => {
 const App = () => {
   const [code, setCode] = React.useState("");
   const [hoveredRange, setHoveredRange] = React.useState(null);
+  Trace.resetCalls();
   let err;
 
   if (code.trim()) {
@@ -117,7 +118,6 @@ const App = () => {
       const ast = parseExpression(code);
 
       try {
-        Trace.resetCalls();
         synth(ast);
       } catch (e) {}
     } catch (e) {
@@ -161,7 +161,8 @@ const App = () => {
     onValueChange: setCode,
     style: {
       fontFamily: "monospace",
-      fontSize: 14
+      fontSize: 14,
+      minHeight: "100%"
     }
   })), /* @__PURE__ */React.createElement(Label, {
     gridArea: "traceLabel"
