@@ -7,7 +7,7 @@ function expectIsSubtype(a: string, b: string) {
   return expect(Type.isSubtype(aAst, bAst));
 }
 
-describe('primtives', () => {
+describe('primitives', () => {
   it('number <: number', () => {
     expectIsSubtype('number', 'number').toBe(true);
   });
