@@ -34,16 +34,3 @@ const isSubtype = Trace.instrument("isSubtype", function isSubtype2(a, b) {
   return false;
 });
 export default isSubtype;
-export function equiv(a, b) {
-  return isSubtype(a, b) && isSubtype(b, a);
-}
-export function isPrimitiveSubtype(a, b) {
-  if (Type.isNever(a)) return true;
-  if (Type.isUnknown(b)) return true;
-
-  if (Type.isSingleton(a)) {
-    if (Type.isSingleton(b)) return a.value === b.value;else return a.base.type === b.type;
-  }
-
-  return false;
-}
