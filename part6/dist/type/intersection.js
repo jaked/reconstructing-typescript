@@ -1,4 +1,4 @@
-import { isPrimitiveSubtype, equiv } from "./isSubtype.js";
+import isSubtype from "./isSubtype.js";
 import { unknown, never } from "./constructors.js";
 import { isBoolean, isIntersection, isNever, isNumber, isSingleton, isString, isUnknown, isUnion } from "./validators.js";
 import { union, distributeUnion } from "./union.js";
@@ -6,8 +6,8 @@ import { union, distributeUnion } from "./union.js";
 function collapseRedundant(xs) {
   let accum = [];
   xs.forEach(x => {
-    if (accum.some(y => isPrimitiveSubtype(y, x) || equiv(x, y))) {} else {
-      accum = accum.filter(y => !isPrimitiveSubtype(x, y));
+    if (accum.some(y => isSubtype(y, x))) {} else {
+      accum = accum.filter(y => !isSubtype(x, y));
       accum.push(x);
     }
   });

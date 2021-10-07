@@ -1,7 +1,7 @@
 import * as Trace from "../util/trace.js";
 import propType from "./propType.js";
 import * as Type from "./validators.js";
-export const isSubtype = Trace.instrument("isSubtype", function isSubtype2(a, b) {
+const isSubtype = Trace.instrument("isSubtype", function isSubtype2(a, b) {
   if (Type.isNever(a)) return true;
   if (Type.isUnknown(b)) return true;
   if (Type.isUnion(a)) return a.types.every(a2 => isSubtype2(a2, b));
@@ -33,16 +33,4 @@ export const isSubtype = Trace.instrument("isSubtype", function isSubtype2(a, b)
 
   return false;
 });
-export function equiv(a, b) {
-  return isSubtype(a, b) && isSubtype(b, a);
-}
-export function isPrimitiveSubtype(a, b) {
-  if (Type.isNever(a)) return true;
-  if (Type.isUnknown(b)) return true;
-
-  if (Type.isSingleton(a)) {
-    if (Type.isSingleton(b)) return a.value === b.value;else return a.base.type === b.type;
-  }
-
-  return false;
-}
+export default isSubtype;

@@ -8,7 +8,7 @@ export function getCalls() {
   return calls;
 }
 export function instrument(name, f) {
-  return (...args) => {
+  const fn = (...args) => {
     const calls2 = [];
     callsStack.push(calls2);
     let result;
@@ -34,4 +34,7 @@ export function instrument(name, f) {
     callsStack[callsStack.length - 1].push(call);
     if ("value" in result) return result.value;else throw result.error;
   };
+
+  fn.instrumentedName = name;
+  return fn;
 }

@@ -28,8 +28,16 @@ const type = type2 => {
   });
 };
 
+const types = types2 => {
+  const elems = [];
+  types2.forEach((t, i) => {
+    elems.push(type(t));
+    if (i < types2.length - 1) elems.push( /* @__PURE__ */React.createElement("b", null, ", "));
+  });
+  return elems;
+};
+
 const env = env2 => {
-  console.log(env2);
   const bindings = [];
 
   for (const [name, type2] of env2.entries()) {
@@ -44,6 +52,10 @@ const env = env2 => {
   });
 };
 
+const instrumentedFunction = fn => {
+  if ("instrumentedName" in fn) return /* @__PURE__ */React.createElement("b", null, fn.instrumentedName);else return /* @__PURE__ */React.createElement("i", null, "function");
+};
+
 const Args = ({
   call
 }) => {
@@ -53,6 +65,15 @@ const Args = ({
     args.push(env(call.args[0]));
     args.push( /* @__PURE__ */React.createElement("b", null, ", "));
     args.push(expression(call.args[1]));
+  } else if (call.name.startsWith("andThen")) {
+    let i = 0;
+
+    for (i; i < call.args.length - 1; i++) {
+      args.push(type(call.args[i]));
+      args.push( /* @__PURE__ */React.createElement("b", null, ", "));
+    }
+
+    if (call.name === "andThen") args.push(instrumentedFunction(call.args[i]));else args.push(type(call.args[i]));
   } else if (call.name.startsWith("check")) {
     args.push(env(call.args[0]));
     args.push( /* @__PURE__ */React.createElement("b", null, ", "));
@@ -63,6 +84,8 @@ const Args = ({
     args.push(type(call.args[0]));
     args.push( /* @__PURE__ */React.createElement("b", null, ", "));
     args.push(type(call.args[1]));
+  } else if (call.name === "union") {
+    args.push(...types(call.args));
   } else bug(`unexpected call name ${call.name}`);
 
   return /* @__PURE__ */React.createElement(React.Fragment, null, args);
@@ -81,6 +104,8 @@ const Result = ({
   } else {
     if (call.name.startsWith("synth")) {
       return type(call.result.value);
+    } else if (call.name.startsWith("andThen")) {
+      return type(call.result.value);
     } else if (call.name.startsWith("check")) {
       return /* @__PURE__ */React.createElement("i", {
         style: {
@@ -89,6 +114,8 @@ const Result = ({
       }, "returned");
     } else if (call.name === "isSubtype") {
       return /* @__PURE__ */React.createElement("span", null, call.result.value ? "true" : "false");
+    } else if (call.name === "union") {
+      return type(call.result.value);
     } else bug(`unexpected call name ${call.name}`);
   }
 };
