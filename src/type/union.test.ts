@@ -52,13 +52,15 @@ describe('union', () => {
     expect(actual).toEqual(expected);
   });
 
-  it('does not collapse object subtypes', () => {
+  it('collapses object subtypes', () => {
     const actual =
       Type.union(
         Type.object({ foo: Type.string, bar: Type.boolean }),
         Type.object({ foo: Type.string, bar: Type.boolean, baz: Type.number })
       );
-    expect(Type.isUnion(actual) && actual.types.length === 2).toBe(true);
+    const expected =
+    Type.object({ foo: Type.string, bar: Type.boolean });
+    expect(actual).toEqual(expected);
   });
 
   it('collapses primitive subtypes', () => {

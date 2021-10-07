@@ -1,14 +1,15 @@
+import * as Trace from '../util/trace';
 import { Type } from './types';
-import { isPrimitiveSubtype, equiv } from './isSubtype';
+import isSubtype from './isSubtype';
 import { never } from './constructors';
 import { isUnion } from './validators';
 
 function collapseRedundant(xs: Array<Type>): Array<Type> {
   let accum: Array<Type> = [];
   xs.forEach(x => {
-    if (accum.some(y => isPrimitiveSubtype(x, y) || equiv(x, y))) { /* skip it */ }
+    if (accum.some(y => isSubtype(x, y))) { /* skip it */ }
     else {
-      accum = accum.filter(y => !isPrimitiveSubtype(y, x));
+      accum = accum.filter(y => !isSubtype(y, x));
       accum.push(x);
     }
   });
@@ -24,7 +25,8 @@ function flatten(types: Array<Type>): Array<Type> {
   return accum;
 }
 
-export default function union(...types: Array<Type>): Type {
+const union = Trace.instrument('union',
+function union(...types: Array<Type>): Type {
   types = flatten(types);
   types = collapseRedundant(types);
 
@@ -32,3 +34,6 @@ export default function union(...types: Array<Type>): Type {
   if (types.length === 1) return types[0];
   return { type: 'Union', types }
 }
+) as (...types: Type[]) => Type; // TODO(jaked)
+
+export default union;

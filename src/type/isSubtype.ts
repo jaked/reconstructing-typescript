@@ -41,20 +41,3 @@ function (a: Types.Type, b: Types.Type): boolean {
 );
 
 export default isSubtype;
-
-export function equiv(a: Types.Type, b: Types.Type): boolean {
-  return isSubtype(a, b) && isSubtype(b, a);
-}
-
-export function isPrimitiveSubtype(a: Types.Type, b: Types.Type): boolean {
-  if (Type.isNever(a)) return true;
-
-  if (Type.isSingleton(a)) {
-    if (Type.isSingleton(b))
-      return a.value === b.value;
-    else
-      return a.base.type === b.type;
-  }
-
-  return false;
-}
