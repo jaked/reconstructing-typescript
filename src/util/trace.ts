@@ -20,8 +20,9 @@ export function getCalls() {
 export function instrument<A,R>(name: string, f: (a: A) => R): typeof f
 export function instrument<A,B,R>(name: string, f: (a: A, b: B) => R): typeof f
 export function instrument<A,B,C,R>(name: string, f: (a: A, b: B, c: C) => R): typeof f
+export function instrument<A, R>(name: string, f: (...args: A[]) => R): typeof f
 export function instrument<R>(name: string, f: (...args: unknown[]) => R): typeof f {
-  return (...args) => {
+  const fn = (...args: unknown[]) => {
     const calls: call[] = [];
     callsStack.push(calls);
     let result: { value: R } | { error: unknown}
@@ -37,4 +38,6 @@ export function instrument<R>(name: string, f: (...args: unknown[]) => R): typeo
     if ('value' in result) return result.value;
     else throw result.error;
   }
+  fn.instrumentedName = name;
+  return fn;
 }

@@ -24,6 +24,16 @@ const type = (type: Type) => {
   return <span dangerouslySetInnerHTML={{ __html }} />;
 }
 
+const types = (types: Type[]) => {
+  const elems: React.ReactElement[] = [];
+  types.forEach((t, i) => {
+    elems.push(type(t));
+    if (i < types.length - 1)
+      elems.push(<b>, </b>);
+  });
+  return elems;
+}
+
 const env = (env: Env) => {
   const bindings: string[] = [];
   for (const [name, type] of env.entries()) {
@@ -44,7 +54,7 @@ const boolean = (value: boolean) => {
 type ValueDescriptor = ((value: any) => React.ReactElement)
 
 type FunctionDescriptor = {
-  args: ValueDescriptor[],
+  args: ValueDescriptor[] | ValueDescriptor,
   ret: ValueDescriptor
 }
 
@@ -69,6 +79,15 @@ const functions: { [name: string]: FunctionDescriptor } = {
   synthBinary: { args: [env, expression], ret: type },
   synthLogical: { args: [env, expression], ret: type },
   synthUnary: { args: [env, expression], ret: type },
+
+  union: { args: type, ret: type },
+}
+
+const instrumentedFunction = (fn: any) => {
+  if ('instrumentedName' in fn)
+    return <b>{fn.instrumentedName}</b>;
+  else
+    return <i>function</i>;
 }
 
 const Args = ({ call }: { call: Trace.call }) => {
@@ -77,9 +96,10 @@ const Args = ({ call }: { call: Trace.call }) => {
   const func =
     functions[call.name] ?? bug(`unexpected call name ${call.name}`);
 
-  for (let i = 0; i < func.args.length; i++) {
-    args.push(func.args[i](call.args[i]));
-    if (i < func.args.length - 1)
+  for (let i = 0; i < call.args.length; i++) {
+    const arg = Array.isArray(func.args) ? func.args[i] : func.args;
+    args.push(arg(call.args[i]));
+    if (i < call.args.length - 1)
       args.push(<b>, </b>);
   }
 
