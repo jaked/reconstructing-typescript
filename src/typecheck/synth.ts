@@ -123,7 +123,7 @@ function synthBinary(env: Env, ast: AST.BinaryExpression): Type {
   if (!AST.isExpression(ast.left)) bug(`unimplemented ${ast.left.type}`)
   const left = synth(env, ast.left);
   const right = synth(env, ast.right);
-  return andThen2(left, right, Trace.instrument('andThen2Binary', (left: Type, right: Type) => {
+  return andThen(left, right, Trace.instrument(`andThenBinary[${ast.operator}]`, (left: Type, right: Type) => {
     switch (ast.operator) {
       case '===':
         if (Type.isSingleton(left) && Type.isSingleton(right))
@@ -160,7 +160,7 @@ const synthLogical = Trace.instrument('synthLogical',
 function synthLogical(env: Env, ast: AST.LogicalExpression): Type {
   const left = synth(env, ast.left);
   const right = synth(env, ast.right);
-  return andThen2(left, right, Trace.instrument('andThen2Logical', (left: Type, right: Type) => {
+  return andThen(left, right, Trace.instrument(`andThenLogical[${ast.operator}]`, (left: Type, right: Type) => {
     switch (ast.operator) {
       case '&&':
         if (Type.isFalsy(left))
@@ -219,40 +219,51 @@ function synthUnary(env: Env, ast: AST.UnaryExpression): Type {
 }
 );
 
-const andThen = Trace.instrument('andThen',
-function andThen(type: Type, fn: (t: Type) => Type) {
-  if (Type.isUnion(type))
-    return Type.union(...type.types.map(fn));
-  else
-    return fn(type);
-}
-);
-
-const andThen2 = Trace.instrument('andThen2',
-function andThen2(type1: Type, type2: Type, fn: (t1: Type, t2: Type) => Type) {
-  const types: Type[] = [];
-  if (Type.isUnion(type1)) {
-    type1.types.forEach(t1 => {
-      if (Type.isUnion(type2)) {
-        type2.types.forEach(t2 => {
-          types.push(fn(t1, t2));
-        });
-      } else {
-        types.push(fn(t1, type2));
-      }
-    });
-  } else {
-    if (Type.isUnion(type2)) {
-      type2.types.forEach(t2 => {
-        types.push(fn(type1, t2));
-      });
-    } else {
-      types.push(fn(type1, type2));
+function andThen2Union(t1: Type, t2: Type, fn: (t1: Type, t2: Type) => Type) {
+  const t1s = Type.isUnion(t1) ? t1.types : [t1];
+  const t2s = Type.isUnion(t2) ? t2.types : [t2];
+  const ts: Type[] = [];
+  for (const t1 of t1s) {
+    for (const t2 of t2s) {
+      ts.push(fn(t1, t2));
     }
   }
-  return Type.union(...types);
+  return Type.union(...ts);
 }
-);
+
+function andThen2(t1: Type, t2: Type, fn: (t1: Type, t2: Type) => Type): Type {
+  if (Type.isUnion(t1) || Type.isUnion(t2)) {
+    return Trace.instrument('andThen', andThen2Union)(t1, t2, fn);
+  } else {
+    return fn(t1, t2);
+  }
+}
+
+function andThen1Union (t: Type.Union, fn: (t: Type) => Type) {
+  return Type.union(...t.types.map(t => andThen(t, fn)));
+}
+
+function andThen1(t: Type, fn: (t: Type) => Type) {
+  if (Type.isUnion(t)) {
+    return Trace.instrument('andThen', andThen1Union)(t, fn);
+  } else {
+    return fn(t);
+  }
+}
+
+const andThen:
+  ((t: Type, fn: (t: Type) => Type) => Type) &
+  ((t1: Type, t2: Type, fn: (t1: Type, t2: Type) => Type) => Type) =
+  (...args: any[]) => {
+    switch (args.length) {
+      case 2:
+        return andThen1(args[0], args[1]);
+      case 3:
+        return andThen2(args[0], args[1], args[2]);
+      default:
+        bug(`unexpected ${args.length}`);
+    }
+  }
 
 const synth = Trace.instrument('synth',
 function synth(env: Env, ast: AST.Expression): Type {

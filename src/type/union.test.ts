@@ -59,7 +59,7 @@ describe('union', () => {
         Type.object({ foo: Type.string, bar: Type.boolean, baz: Type.number })
       );
     const expected =
-    Type.object({ foo: Type.string, bar: Type.boolean });
+      Type.object({ foo: Type.string, bar: Type.boolean });
     expect(actual).toEqual(expected);
   });
 
