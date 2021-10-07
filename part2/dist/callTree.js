@@ -29,7 +29,6 @@ const type = type2 => {
 };
 
 const env = env2 => {
-  console.log(env2);
   const bindings = [];
 
   for (const [name, type2] of env2.entries()) {
