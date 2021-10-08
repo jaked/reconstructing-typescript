@@ -84,10 +84,12 @@ const functions: { [name: string]: FunctionDescriptor } = {
 }
 
 const instrumentedFunction = (fn: any) => {
-  if ('instrumentedName' in fn)
-    return <b>{fn.instrumentedName}</b>;
-  else
-    return <i>function</i>;
+  const name = fn.instrumentedName;
+  if (name.startsWith('...synth')) {
+    return <span><b>{name}</b>[{expression(fn.x)}]</span>
+  } else {
+    return <b>{name}</b>;
+  }
 }
 
 const Args = ({ call }: { call: Trace.call }) => {
@@ -119,6 +121,14 @@ const Result = ({ call }: { call: Trace.call }) => {
 
 const hoverColor = 'hsl(220, 100%, 90%)'
 
+const Extra = ({ call } : { call: Trace.call }) => {
+  if (call.name.startsWith('...synth')) {
+    return <span>[{expression(call.x as AST.Expression)}]</span>
+  } else {
+    return null;
+  }
+}
+
 type CallProps = {
   call: Trace.call;
   setHoveredRange: (range: Range | null) => void;
@@ -131,6 +141,11 @@ const Call = ({ call, setHoveredRange } : CallProps) => {
   const onMouseEnter = () => {
     if (call.name.startsWith('synth') || call.name.startsWith('check')) {
       const expr = call.args[1] as AST.Expression;
+      if (expr.start !== null && expr.end !== null) {
+        setHoveredRange({ start: expr.start, end: expr.end })
+      }
+    } else if (call.name.startsWith('...synth')) {
+      const expr = call.x as AST.Expression;
       if (expr.start !== null && expr.end !== null) {
         setHoveredRange({ start: expr.start, end: expr.end })
       }
@@ -152,7 +167,7 @@ const Call = ({ call, setHoveredRange } : CallProps) => {
       <span style={{ display: 'inline-block', width: '12px', textAlign: 'center' }}>
         {expanded ? '▾' : '▸'}
       </span>
-      <b>{call.name}</b>(<Args call={call} />)
+      <b>{call.name}</b><Extra call={call} />(<Args call={call} />)
     </div>
     { expanded &&
       <div style={{

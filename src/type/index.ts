@@ -7,6 +7,7 @@ import ToString from './toString';
 import OfTSType from './ofTSType';
 import PropType from './propType';
 import * as Truthiness from './truthiness';
+import Map from './map';
 
 module Type {
   export type Never = Types.Never;
@@ -42,6 +43,7 @@ module Type {
   export const isUnion = Validators.isUnion;
 
   export const isSubtype = IsSubtype;
+  export const map = Map;
   export const toString = ToString;
   export const ofTSType = OfTSType;
 
