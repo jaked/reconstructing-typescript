@@ -4,31 +4,26 @@ import isSubtype from './isSubtype';
 import { never } from './constructors';
 import { isUnion } from './validators';
 
-function collapseRedundant(xs: Array<Type>): Array<Type> {
-  let accum: Array<Type> = [];
-  xs.forEach(x => {
-    if (accum.some(y => isSubtype(x, y))) { /* skip it */ }
-    else {
-      accum = accum.filter(y => !isSubtype(y, x));
-      accum.push(x);
-    }
-  });
-  return accum;
+function collapseSubtypes(ts: Type[]): Type[] {
+  return ts.filter((t1, i1) =>
+    ts.every((t2, i2) =>
+      i1 === i2 ||
+      !isSubtype(t1, t2) ||
+      (isSubtype(t2, t1) && i1 < i2)
+    )
+  );
 }
 
-function flatten(types: Array<Type>): Array<Type> {
-  const accum: Array<Type> = [];
-  types.forEach(t => {
-    if (isUnion(t)) accum.push(...t.types); // t already flattened
-    else accum.push(t);
-  });
-  return accum;
+function flatten(ts: Type[]): Type[] {
+  return ([] as Type[]).concat(
+    ...ts.map(t => isUnion(t) ? t.types : t)
+  );
 }
 
 const union = Trace.instrument('union',
-function union(...types: Array<Type>): Type {
+function union(...types: Type[]): Type {
   types = flatten(types);
-  types = collapseRedundant(types);
+  types = collapseSubtypes(types);
 
   if (types.length === 0) return never;
   if (types.length === 1) return types[0];
