@@ -23,7 +23,9 @@ function map2(t1: Type, t2: Type, fn: (t1: Type, t2: Type) => Type): Type {
 
 function map1(t: Type, fn: (t: Type) => Type) {
   if (isUnion(t)) {
-    return union(...t.types.map(fn));
+    // avoid passing extra args to fn
+    // so we don't mess up tracing
+    return union(...t.types.map(t => fn(t)));
 
   } else {
     return fn(t);
