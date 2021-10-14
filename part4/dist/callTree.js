@@ -53,7 +53,13 @@ const env = env2 => {
 };
 
 const instrumentedFunction = fn => {
-  if ("instrumentedName" in fn) return /* @__PURE__ */React.createElement("b", null, fn.instrumentedName);else return /* @__PURE__ */React.createElement("i", null, "function");
+  const name = fn.instrumentedName;
+
+  if (name.startsWith("...synth")) {
+    return /* @__PURE__ */React.createElement("span", null, /* @__PURE__ */React.createElement("b", null, name), "[", expression(fn.x), "]");
+  } else {
+    return /* @__PURE__ */React.createElement("b", null, name);
+  }
 };
 
 const Args = ({
@@ -65,7 +71,12 @@ const Args = ({
     args.push(env(call.args[0]));
     args.push( /* @__PURE__ */React.createElement("b", null, ", "));
     args.push(expression(call.args[1]));
-  } else if (call.name.startsWith("andThen")) {
+  } else if (call.name.startsWith("...synth")) {
+    for (let i = 0; i < call.args.length; i++) {
+      args.push(type(call.args[i]));
+      if (i < call.args.length - 1) args.push( /* @__PURE__ */React.createElement("b", null, ", "));
+    }
+  } else if (call.name === "map") {
     let i = 0;
 
     for (i; i < call.args.length - 1; i++) {
@@ -73,7 +84,7 @@ const Args = ({
       args.push( /* @__PURE__ */React.createElement("b", null, ", "));
     }
 
-    if (call.name === "andThen") args.push(instrumentedFunction(call.args[i]));else args.push(type(call.args[i]));
+    args.push(instrumentedFunction(call.args[i]));
   } else if (call.name.startsWith("check")) {
     args.push(env(call.args[0]));
     args.push( /* @__PURE__ */React.createElement("b", null, ", "));
@@ -104,7 +115,9 @@ const Result = ({
   } else {
     if (call.name.startsWith("synth")) {
       return type(call.result.value);
-    } else if (call.name.startsWith("andThen")) {
+    } else if (call.name.startsWith("...synth")) {
+      return type(call.result.value);
+    } else if (call.name === "map") {
       return type(call.result.value);
     } else if (call.name.startsWith("check")) {
       return /* @__PURE__ */React.createElement("i", {
@@ -122,6 +135,16 @@ const Result = ({
 
 const hoverColor = "hsl(220, 100%, 90%)";
 
+const Extra = ({
+  call
+}) => {
+  if (call.name.startsWith("...synth")) {
+    return /* @__PURE__ */React.createElement("span", null, "[", expression(call.x), "]");
+  } else {
+    return null;
+  }
+};
+
 const Call = ({
   call,
   setHoveredRange
@@ -134,6 +157,15 @@ const Call = ({
   const onMouseEnter = () => {
     if (call.name.startsWith("synth") || call.name.startsWith("check")) {
       const expr = call.args[1];
+
+      if (expr.start !== null && expr.end !== null) {
+        setHoveredRange({
+          start: expr.start,
+          end: expr.end
+        });
+      }
+    } else if (call.name.startsWith("...synth")) {
+      const expr = call.x;
 
       if (expr.start !== null && expr.end !== null) {
         setHoveredRange({
@@ -164,7 +196,9 @@ const Call = ({
       width: "12px",
       textAlign: "center"
     }
-  }, expanded ? "▾" : "▸"), /* @__PURE__ */React.createElement("b", null, call.name), "(", /* @__PURE__ */React.createElement(Args, {
+  }, expanded ? "▾" : "▸"), /* @__PURE__ */React.createElement("b", null, call.name), /* @__PURE__ */React.createElement(Extra, {
+    call
+  }), "(", /* @__PURE__ */React.createElement(Args, {
     call
   }), ")"), expanded && /* @__PURE__ */React.createElement("div", {
     style: {
