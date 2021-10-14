@@ -4,7 +4,7 @@ import propType from './propType';
 import * as Type from './validators';
 
 const isSubtype = Trace.instrument('isSubtype',
-function isSubtype(a: Types.Type, b: Types.Type): boolean {
+function (a: Types.Type, b: Types.Type): boolean {
   if (Type.isNull(a) && Type.isNull(b)) return true;
   if (Type.isBoolean(a) && Type.isBoolean(b)) return true;
   if (Type.isNumber(a) && Type.isNumber(b)) return true;
