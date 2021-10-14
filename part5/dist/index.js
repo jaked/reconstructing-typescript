@@ -9,13 +9,11 @@ import synth from "./typecheck/synth.js";
 import Env from "./typecheck/env.js";
 import CallTree from "./callTree.js";
 const examples = {
-  "+": "7 + 9",
-  "typeof and ===": `typeof 'foo' === 'string'`,
-  "+ function": "(x: 7, y: 9) => x + y",
-  "check + function": "((x, y) => x + y) as (x: 7, y: 9) => 16",
-  "check + function error": "((x, y) => x + y + 1) as (x: 7, y: 9) => 16",
-  "&& function": "(x: 7, y: 9) => x && y",
-  "check && function": `((x, y) => x && y) as (x: false, y: 'foo') => false`
+  "+": "(7 as 6 | 7 | 8)  + (9 as 9 | 10 | 11)",
+  member: "({ foo: 7 } as { foo: 7 } | { foo: 9 }).foo",
+  "&&": "(x: number, y: boolean | string) => x && y",
+  "function call": "(((x: number) => x) as ((x: number) => number) | ((x: number) => string))(7)",
+  "incomplete subtyping": "((obj: { foo: 1 } | { foo: 2 }) => null)({ foo: 1 as 1 | 2 })"
 };
 
 const ScrollBox = ({

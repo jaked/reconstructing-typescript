@@ -7,6 +7,7 @@ import ToString from "./toString.js";
 import OfTSType from "./ofTSType.js";
 import PropType from "./propType.js";
 import * as Truthiness from "./truthiness.js";
+import Map from "./map.js";
 var Type;
 
 (function (Type2) {
@@ -34,6 +35,7 @@ var Type;
   Type2.isUnion = Validators.isUnion;
   Type2.isIntersection = Validators.isIntersection;
   Type2.isSubtype = IsSubtype;
+  Type2.map = Map;
   Type2.toString = ToString;
   Type2.ofTSType = OfTSType;
   Type2.propType = PropType;

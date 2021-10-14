@@ -3,6 +3,7 @@ import { bug, err } from "../util/err.js";
 import * as Trace from "../util/trace.js";
 import Type from "../type/index.js";
 import check from "./check.js";
+const underscore = AST.identifier("_");
 const synthIdentifier = Trace.instrument("synthIdentifier", function synthIdentifier2(env, ast) {
   const type = env.get(ast.name);
   if (!type) err(`unbound identifier '${ast.name}'`, ast);
@@ -38,11 +39,13 @@ const synthMember = Trace.instrument("synthMember", function synthMember2(env, a
   if (!AST.isIdentifier(prop)) bug(`unimplemented ${prop.type}`);
   if (ast.computed) bug(`unimplemented computed`);
   const object = synth(env, ast.object);
-  return andThen(object, Trace.instrument("andThenMember", object2 => {
+  return Type.map(object, Trace.instrument("...synthMember", object2 => {
     if (!Type.isObject(object2)) err(". expects object", ast.object);
     const type = Type.propType(object2, prop.name);
     if (!type) err(`no such property ${prop.name}`, prop);
     return type;
+  }, { ...ast,
+    object: underscore
   }));
 });
 const synthTSAs = Trace.instrument("synthTSAs", function synthTSAs2(env, ast) {
@@ -78,7 +81,7 @@ const synthFunction = Trace.instrument("synthFunction", function synthFunction2(
 const synthCall = Trace.instrument("synthCall", function synthCall2(env, ast) {
   if (!AST.isExpression(ast.callee)) bug(`unimplemented ${ast.callee.type}`);
   const callee = synth(env, ast.callee);
-  return andThen(callee, Trace.instrument("andThenCall", callee2 => {
+  return Type.map(callee, Trace.instrument("...synthCall", callee2 => {
     if (!Type.isFunction(callee2)) err(`call expects function`, ast.callee);
     if (callee2.args.length !== ast.arguments.length) err(`expected ${callee2.args.length} args, got ${ast.arguments.length} args`, ast);
     callee2.args.forEach((type, i) => {
@@ -87,13 +90,15 @@ const synthCall = Trace.instrument("synthCall", function synthCall2(env, ast) {
       check(env, arg, type);
     });
     return callee2.ret;
+  }, { ...ast,
+    callee: underscore
   }));
 });
 const synthBinary = Trace.instrument("synthBinary", function synthBinary2(env, ast) {
   if (!AST.isExpression(ast.left)) bug(`unimplemented ${ast.left.type}`);
   const left = synth(env, ast.left);
   const right = synth(env, ast.right);
-  return andThen(left, right, Trace.instrument(`andThenBinary[${ast.operator}]`, (left2, right2) => {
+  return Type.map(left, right, Trace.instrument("...synthBinary", (left2, right2) => {
     switch (ast.operator) {
       case "===":
         if (Type.isSingleton(left2) && Type.isSingleton(right2)) return Type.singleton(left2.value === right2.value);else return Type.boolean;
@@ -116,12 +121,15 @@ const synthBinary = Trace.instrument("synthBinary", function synthBinary2(env, a
       default:
         bug(`unimplemented ${ast.operator}`);
     }
+  }, { ...ast,
+    left: underscore,
+    right: underscore
   }));
 });
 const synthLogical = Trace.instrument("synthLogical", function synthLogical2(env, ast) {
   const left = synth(env, ast.left);
   const right = synth(env, ast.right);
-  return andThen(left, right, Trace.instrument(`andThenLogical[${ast.operator}]`, (left2, right2) => {
+  return Type.map(left, right, Trace.instrument("...synthLogical", (left2, right2) => {
     switch (ast.operator) {
       case "&&":
         if (Type.isFalsy(left2)) return left2;else if (Type.isTruthy(left2)) return right2;else return Type.union(left2, right2);
@@ -132,6 +140,9 @@ const synthLogical = Trace.instrument("synthLogical", function synthLogical2(env
       default:
         bug(`unimplemented ${ast.operator}`);
     }
+  }, { ...ast,
+    left: underscore,
+    right: underscore
   }));
 });
 
@@ -165,7 +176,7 @@ function typeofType(type) {
 
 const synthUnary = Trace.instrument("synthUnary", function synthUnary2(env, ast) {
   const argument = synth(env, ast.argument);
-  return andThen(argument, Trace.instrument("andThenUnary", argument2 => {
+  return Type.map(argument, Trace.instrument("...synthUnary", argument2 => {
     switch (ast.operator) {
       case "!":
         if (Type.isTruthy(argument2)) return Type.singleton(false);else if (Type.isFalsy(argument2)) return Type.singleton(true);else return Type.boolean;
@@ -176,87 +187,10 @@ const synthUnary = Trace.instrument("synthUnary", function synthUnary2(env, ast)
       default:
         bug(`unimplemented ${ast.operator}`);
     }
+  }, { ...ast,
+    argument: underscore
   }));
 });
-
-function andThen2Union(t1, t2, fn) {
-  const t1s = Type.isUnion(t1) ? t1.types : [t1];
-  const t2s = Type.isUnion(t2) ? t2.types : [t2];
-  const ts = [];
-
-  for (const t12 of t1s) {
-    for (const t22 of t2s) {
-      ts.push(andThen(t12, t22, fn));
-    }
-  }
-
-  return Type.union(...ts);
-}
-
-function andThen2Intersection(t1, t2, fn) {
-  const t1s = Type.isIntersection(t1) ? t1.types : [t1];
-  const t2s = Type.isIntersection(t2) ? t2.types : [t2];
-  const ts = [];
-  let error = void 0;
-
-  for (const t12 of t1s) {
-    for (const t22 of t2s) {
-      try {
-        ts.push(fn(t12, t22));
-      } catch (e) {
-        if (!error) error = e;
-      }
-    }
-  }
-
-  if (ts.length === 0) {
-    throw error;
-  } else {
-    return Type.intersection(...ts);
-  }
-}
-
-function andThen2(t1, t2, fn) {
-  if (Type.isUnion(t1) || Type.isUnion(t2)) {
-    return Trace.instrument("andThen", andThen2Union)(t1, t2, fn);
-  } else if (Type.isIntersection(t1) || Type.isIntersection(t2)) {
-    return Trace.instrument("andThen", andThen2Intersection)(t1, t2, fn);
-  } else {
-    return fn(t1, t2);
-  }
-}
-
-function andThen1Union(t, fn) {
-  return Type.union(...t.types.map(t2 => andThen(t2, fn)));
-}
-
-function andThen1Intersection(t, fn) {
-  return andThen2Intersection(t, Type.never, fn);
-}
-
-function andThen1(t, fn) {
-  if (Type.isUnion(t)) {
-    return Trace.instrument("andThen", andThen1Union)(t, fn);
-  } else if (Type.isIntersection(t)) {
-    return Trace.instrument("andThen", andThen1Intersection)(t, fn);
-  } else {
-    return fn(t);
-  }
-}
-
-const andThen = (...args) => {
-  switch (args.length) {
-    case 2:
-      return andThen1(args[0], args[1]);
-
-    case 3:
-      return andThen2(args[0], args[1], args[2]);
-
-    default:
-      bug(`unexpected ${args.length}`);
-  }
-};
-
 const synth = Trace.instrument("synth", function synth2(env, ast) {
   switch (ast.type) {
     case "Identifier":
