@@ -7,7 +7,7 @@ export function resetCalls() {
 export function getCalls() {
   return calls;
 }
-export function instrument(name, f) {
+export function instrument(name, f, x) {
   const fn = (...args) => {
     const calls2 = [];
     callsStack.push(calls2);
@@ -29,12 +29,14 @@ export function instrument(name, f) {
       name,
       args,
       result,
-      calls: calls2
+      calls: calls2,
+      x
     };
     callsStack[callsStack.length - 1].push(call);
     if ("value" in result) return result.value;else throw result.error;
   };
 
   fn.instrumentedName = name;
+  fn.x = x;
   return fn;
 }
