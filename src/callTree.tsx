@@ -106,6 +106,8 @@ const functions: { [name: string]: FunctionDescriptor } = {
   union: { args: type, ret: type },
   flatten: { args: [typeArray], ret: typeArray },
   collapseSubtypes: { args: [typeArray], ret: typeArray },
+  intersection: { args: type, ret: type },
+  collapseSupertypes: { args: [typeArray], ret: typeArray },
 }
 
 const Args = ({ call }: { call: Trace.call }) => {

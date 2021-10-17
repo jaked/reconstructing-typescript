@@ -24,20 +24,26 @@ function flatten(ts: Type[]): Type[] {
 }
 );
 
-export function distributeUnion(xs: Type[]): Type[][] {
-  function dist(prefix: Type[], suffix: Type[], accum: Type[][]): void {
-    if (suffix.length === 0) {
-      accum.push(prefix);
-    } else if (isUnion(suffix[0])) {
-      const suffix2 = suffix.slice(1);
-      return suffix[0].types.forEach(y => dist([...prefix, y], suffix2, accum))
+export function distributeUnion(ts: Type[]): Type[][] {
+  const accum: Type[][] = [];
+
+  function dist(ts: Type[], i: number): void {
+    if (i === ts.length) {
+      accum.push(ts);
     } else {
-      dist([...prefix, suffix[0]], suffix.slice(1), accum);
+      const ti = ts[i];
+      if (isUnion(ti)) {
+        for (const t of ti.types) {
+          const ts2 = ts.slice(0, i).concat(t, ts.slice(i + 1));
+          dist(ts2, i + 1);
+        }
+      } else {
+        dist(ts, i + 1);
+      }
     }
   }
 
-  const accum: Type[][] = [];
-  dist([], xs, accum);
+  dist(ts, 0);
   return accum;
 }
 
