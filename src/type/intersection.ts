@@ -1,8 +1,9 @@
 import * as Trace from '../util/trace';
 import { Type } from './types';
+import propType from './propType';
 import isSubtype from './isSubtype';
 import { unknown, never } from './constructors';
-import { isIntersection, isNever, isSingleton, isUnknown } from './validators';
+import { isIntersection, isNever, isObject, isSingleton, isUnknown } from './validators';
 import { union, distributeUnion } from './union';
 
 function collapseSupertypes(ts: Type[]): Type[] {
@@ -27,6 +28,13 @@ export function emptyIntersection(x: Type, y: Type): boolean {
   if (isSingleton(x) && isSingleton(y)) return x.value != y.value;
   if (isSingleton(x)) return x.base.type !== y.type;
   if (isSingleton(y)) return y.base.type !== x.type;
+  if (isObject(x) && isObject(y)) {
+    return x.properties.some(({ name: xName, type: xType }) => {
+      const yType = propType(y, xName);
+      if (!yType) return false;
+      else return emptyIntersection(xType, yType);
+    });
+  }
   return x.type !== y.type;
 }
 

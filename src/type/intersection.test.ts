@@ -96,9 +96,9 @@ describe('intersection', () => {
     expect(Type.intersection(a, b)).toEqual(Type.never);
   });
 
-  it('does not return bottom for uninhabited object intersections', () => {
+  it('returns bottom for uninhabited object intersections', () => {
     const a = Type.object({ type: Type.singleton('A') });
     const b = Type.object({ type: Type.singleton('B') });
-    expect(Type.intersection(a, b).type).toBe('Intersection');
+    expect(Type.intersection(a, b)).toEqual(Type.never);
   });
 });
