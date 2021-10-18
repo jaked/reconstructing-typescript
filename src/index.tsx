@@ -11,11 +11,12 @@ import Env from './typecheck/env';
 import CallTree from './callTree';
 
 const examples = {
-  '+': '(7 as 6 | 7 | 8)  + (9 as 9 | 10 | 11)',
-  'member': '({ foo: 7 } as { foo: 7 } | { foo: 9 }).foo',
-  '&&': '(x: number, y: boolean | string) => x && y',
-  'function call': '(((x: number) => x) as ((x: number) => number) | ((x: number) => string))(7)',
-  'incomplete subtyping': '((obj: { foo: 1 } | { foo: 2 }) => null)({ foo: 1 as 1 | 2 })'
+  'object': '{ foo: 7, bar: 9 } as { foo: number } & { bar: number }',
+  'object error': '{ foo: 7, bar: true } as { foo: number } & { bar: number }',
+  'synth function': '(x: 7 | 9) => x',
+  'check function': '(x => x) as ((x: 7) => 7) & ((x: 9) => 9)',
+  'check function error': '(x => x) as ((x: 7) => 7) & ((x: 7) => 9)',
+  'empty intersection': '{} as { foo: 7 } & { foo: 9 }',
 }
 
 const ScrollBox: React.FunctionComponent<{ gridArea: string }> = ({ gridArea, children }) =>
