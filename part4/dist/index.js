@@ -1,7 +1,7 @@
 import React from "https://cdn.skypack.dev/react@^17.0.2";
 import ReactDOM from "https://cdn.skypack.dev/react-dom@^17.0.2";
 import Editor from "https://cdn.skypack.dev/react-simple-code-editor@^0.11.0";
-import Prism from "https://cdn.skypack.dev/prismjs@^1.24.1";
+import Prism from "https://cdn.skypack.dev/prismjs@^1.25.0";
 import "../_snowpack/pkg/prismjs/components/prism-typescript.js";
 import * as Trace from "./util/trace.js";
 import { parseExpression } from "./ast/parse.js";

@@ -1,5 +1,5 @@
 import React from "https://cdn.skypack.dev/react@^17.0.2";
-import Prism from "https://cdn.skypack.dev/prismjs@^1.24.1";
+import Prism from "https://cdn.skypack.dev/prismjs@^1.25.0";
 import { bug } from "./util/err.js";
 import print from "./ast/print.js";
 import Type from "./type/index.js";
