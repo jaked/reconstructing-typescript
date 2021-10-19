@@ -11,20 +11,27 @@ function flatten(ts) {
   return [].concat(...ts.map(t => isUnion(t) ? t.types : t));
 }
 
-export function distributeUnion(xs) {
-  function dist(prefix, suffix, accum2) {
-    if (suffix.length === 0) {
-      accum2.push(prefix);
-    } else if (isUnion(suffix[0])) {
-      const suffix2 = suffix.slice(1);
-      return suffix[0].types.forEach(y => dist([...prefix, y], suffix2, accum2));
+export function distributeUnion(ts) {
+  const accum = [];
+
+  function dist(ts2, i) {
+    if (i === ts2.length) {
+      accum.push(ts2);
     } else {
-      dist([...prefix, suffix[0]], suffix.slice(1), accum2);
+      const ti = ts2[i];
+
+      if (isUnion(ti)) {
+        for (const t of ti.types) {
+          const ts22 = ts2.slice(0, i).concat(t, ts2.slice(i + 1));
+          dist(ts22, i + 1);
+        }
+      } else {
+        dist(ts2, i + 1);
+      }
     }
   }
 
-  const accum = [];
-  dist([], xs, accum);
+  dist(ts, 0);
   return accum;
 }
 export const union = Trace.instrument("union", function union2(...types) {
