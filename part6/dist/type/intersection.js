@@ -1,21 +1,16 @@
+import * as Trace from "../util/trace.js";
+import propType from "./propType.js";
 import isSubtype from "./isSubtype.js";
 import { unknown, never } from "./constructors.js";
-import { isBoolean, isIntersection, isNever, isNumber, isSingleton, isString, isUnknown, isUnion } from "./validators.js";
+import { isIntersection, isNever, isObject, isSingleton, isUnknown } from "./validators.js";
 import { union, distributeUnion } from "./union.js";
 
-function collapseRedundant(xs) {
-  let accum = [];
-  xs.forEach(x => {
-    if (accum.some(y => isSubtype(y, x))) {} else {
-      accum = accum.filter(y => !isSubtype(x, y));
-      accum.push(x);
-    }
-  });
-  return accum;
+function collapseSupertypes(ts) {
+  return ts.filter((t1, i1) => ts.every((t2, i2) => i1 === i2 || !isSubtype(t2, t1) || isSubtype(t1, t2) && i1 < i2));
 }
 
-function isPrimitive(type) {
-  return isBoolean(type) || isNumber(type) || isString(type);
+function flatten(ts) {
+  return [].concat(...ts.map(t => isIntersection(t) ? t.types : t));
 }
 
 export function emptyIntersection(x, y) {
@@ -24,27 +19,34 @@ export function emptyIntersection(x, y) {
   if (isSingleton(x) && isSingleton(y)) return x.value != y.value;
   if (isSingleton(x)) return x.base.type !== y.type;
   if (isSingleton(y)) return y.base.type !== x.type;
-  if ((isPrimitive(x) || isPrimitive(y)) && x.type !== y.type) return true;
-  return false;
+
+  if (isObject(x) && isObject(y)) {
+    return x.properties.some(({
+      name: xName,
+      type: xType
+    }) => {
+      const yType = propType(y, xName);
+      if (!yType) return false;else return emptyIntersection(xType, yType);
+    });
+  }
+
+  return x.type !== y.type;
 }
 
-function flatten(types) {
-  const accum = [];
-  types.forEach(t => {
-    if (isIntersection(t)) accum.push(...t.types);else accum.push(t);
-  });
-  return accum;
-}
-
-export default function intersection(...types) {
-  types = flatten(types);
-  if (types.some(isUnion)) return union(...distributeUnion(types).map(ts => intersection(...ts)));
-  if (types.some(t => types.some(u => emptyIntersection(t, u)))) return never;
-  types = collapseRedundant(types);
-  if (types.length === 0) return unknown;
-  if (types.length === 1) return types[0];
+function intersectionNoUnion(ts) {
+  if (ts.some((t1, i1) => ts.some((t2, i2) => i1 < i2 && emptyIntersection(t1, t2)))) return never;
+  ts = collapseSupertypes(ts);
+  if (ts.length === 0) return unknown;
+  if (ts.length === 1) return ts[0];
   return {
     type: "Intersection",
-    types
+    types: ts
   };
 }
+
+const intersection = Trace.instrument("intersection", function intersection2(...ts) {
+  ts = flatten(ts);
+  ts = distributeUnion(ts).map(intersectionNoUnion);
+  return union(...ts);
+});
+export default intersection;

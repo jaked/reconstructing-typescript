@@ -1,5 +1,5 @@
 import React from "https://cdn.skypack.dev/react@^17.0.2";
-import Prism from "https://cdn.skypack.dev/prismjs@^1.24.1";
+import Prism from "https://cdn.skypack.dev/prismjs@^1.25.0";
 import { bug } from "./util/err.js";
 import print from "./ast/print.js";
 import Type from "./type/index.js";
@@ -95,7 +95,7 @@ const Args = ({
     args.push(type(call.args[0]));
     args.push( /* @__PURE__ */React.createElement("b", null, ", "));
     args.push(type(call.args[1]));
-  } else if (call.name === "union") {
+  } else if (call.name === "union" || call.name === "intersection") {
     args.push(...types(call.args));
   } else bug(`unexpected call name ${call.name}`);
 
@@ -127,7 +127,7 @@ const Result = ({
       }, "returned");
     } else if (call.name === "isSubtype") {
       return /* @__PURE__ */React.createElement("span", null, call.result.value ? "true" : "false");
-    } else if (call.name === "union") {
+    } else if (call.name === "union" || call.name === "intersection") {
       return type(call.result.value);
     } else bug(`unexpected call name ${call.name}`);
   }

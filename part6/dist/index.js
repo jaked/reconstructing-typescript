@@ -1,7 +1,7 @@
 import React from "https://cdn.skypack.dev/react@^17.0.2";
 import ReactDOM from "https://cdn.skypack.dev/react-dom@^17.0.2";
 import Editor from "https://cdn.skypack.dev/react-simple-code-editor@^0.11.0";
-import Prism from "https://cdn.skypack.dev/prismjs@^1.24.1";
+import Prism from "https://cdn.skypack.dev/prismjs@^1.25.0";
 import "../_snowpack/pkg/prismjs/components/prism-typescript.js";
 import * as Trace from "./util/trace.js";
 import { parseExpression } from "./ast/parse.js";
@@ -9,11 +9,12 @@ import synth from "./typecheck/synth.js";
 import Env from "./typecheck/env.js";
 import CallTree from "./callTree.js";
 const examples = {
-  "+": "(7 as 6 | 7 | 8)  + (9 as 9 | 10 | 11)",
-  member: "({ foo: 7 } as { foo: 7 } | { foo: 9 }).foo",
-  "&&": "(x: number, y: boolean | string) => x && y",
-  "function call": "(((x: number) => x) as ((x: number) => number) | ((x: number) => string))(7)",
-  "incomplete subtyping": "((obj: { foo: 1 } | { foo: 2 }) => null)({ foo: 1 as 1 | 2 })"
+  object: "{ foo: 7, bar: 9 } as { foo: number } & { bar: number }",
+  "object error": "{ foo: 7, bar: true } as { foo: number } & { bar: number }",
+  "synth function": "(x: 7 | 9) => x",
+  "check function": "(x => x) as ((x: 7) => 7) & ((x: 9) => 9)",
+  "check function error": "(x => x) as ((x: 7) => 7) & ((x: 7) => 9)",
+  "empty intersection": "{} as { foo: 7 } & { foo: 9 }"
 };
 
 const ScrollBox = ({
