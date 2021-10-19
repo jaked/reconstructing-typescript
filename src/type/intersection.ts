@@ -39,7 +39,9 @@ export function emptyIntersection(x: Type, y: Type): boolean {
 }
 
 function intersectionNoUnion(ts: Type[]): Type {
-  if (ts.some(t => ts.some(u => emptyIntersection(t, u))))
+  if (ts.some((t1, i1) => ts.some((t2, i2) =>
+    i1 < i2 && emptyIntersection(t1, t2)
+  )))
     return never;
   ts = collapseSupertypes(ts);
 
