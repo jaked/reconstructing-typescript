@@ -3,7 +3,7 @@ import { Type } from './types';
 import propType from './propType';
 import isSubtype from './isSubtype';
 import { unknown, never } from './constructors';
-import { isIntersection, isNever, isObject, isSingleton, isUnknown } from './validators';
+import { isIntersection, isNever, isObject, isSingleton, isUnion, isUnknown } from './validators';
 import { union, distributeUnion } from './union';
 
 function collapseSupertypes(ts: Type[]): Type[] {
@@ -25,12 +25,23 @@ function flatten(ts: Type[]): Type[] {
 export function emptyIntersection(x: Type, y: Type): boolean {
   if (isNever(x) || isNever(y)) return true;
   if (isUnknown(x) || isUnknown(y)) return false;
+
+  if (isUnion(x))
+    return x.types.every(x => emptyIntersection(x, y));
+  if (isUnion(y))
+    return y.types.every(y => emptyIntersection(x, y));
+
+  if (isIntersection(x))
+    return x.types.some(x => emptyIntersection(x, y));
+  if (isIntersection(y))
+    return y.types.some(y => emptyIntersection(x, y));
+
   if (isSingleton(x) && isSingleton(y)) return x.value != y.value;
   if (isSingleton(x)) return x.base.type !== y.type;
   if (isSingleton(y)) return y.base.type !== x.type;
   if (isObject(x) && isObject(y)) {
-    return x.properties.some(({ name: xName, type: xType }) => {
-      const yType = propType(y, xName);
+    return x.properties.some(({ name, type: xType }) => {
+      const yType = propType(y, name);
       if (!yType) return false;
       else return emptyIntersection(xType, yType);
     });

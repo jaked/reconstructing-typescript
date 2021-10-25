@@ -10,6 +10,36 @@ describe('emptyIntersection', () => {
     expect(emptyIntersection(a, b)).toBe(false);
     expect(emptyIntersection(b, a)).toBe(false);
   });
+
+  it('objects', () => {
+    const a = Type.object({ foo: Type.number });
+    const b = Type.object({ foo: Type.string });
+    const c = Type.object({ foo: Type.singleton(7) });
+    expect(emptyIntersection(a, b)).toBe(true);
+    expect(emptyIntersection(b, a)).toBe(true);
+    expect(emptyIntersection(a, c)).toBe(false);
+    expect(emptyIntersection(c, a)).toBe(false);
+  });
+
+  it('unions', () => {
+    const a = Type.union(Type.singleton(7), Type.singleton(9));
+    const b = Type.singleton(7);
+    const c = Type.singleton(8);
+    expect(emptyIntersection(a, b)).toBe(false);
+    expect(emptyIntersection(b, a)).toBe(false);
+    expect(emptyIntersection(a, c)).toBe(true);
+    expect(emptyIntersection(c, a)).toBe(true);
+  });
+
+  it('intersections', () => {
+    const a = Type.intersection(Type.singleton(7), Type.number);
+    const b = Type.singleton(7);
+    const c = Type.singleton(8);
+    expect(emptyIntersection(a, b)).toBe(false);
+    expect(emptyIntersection(b, a)).toBe(false);
+    expect(emptyIntersection(a, c)).toBe(true);
+    expect(emptyIntersection(c, a)).toBe(true);
+  });
 });
 
 describe('intersection', () => {
