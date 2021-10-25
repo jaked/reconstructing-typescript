@@ -22,36 +22,36 @@ function flatten(ts: Type[]): Type[] {
   );
 }
 
-export function emptyIntersection(x: Type, y: Type): boolean {
-  if (isNever(x) || isNever(y)) return true;
-  if (isUnknown(x) || isUnknown(y)) return false;
+export function overlaps(x: Type, y: Type): boolean {
+  if (isNever(x) || isNever(y)) return false;
+  if (isUnknown(x) || isUnknown(y)) return true;
 
   if (isUnion(x))
-    return x.types.every(x => emptyIntersection(x, y));
+    return x.types.some(x => overlaps(x, y));
   if (isUnion(y))
-    return y.types.every(y => emptyIntersection(x, y));
+    return y.types.some(y => overlaps(x, y));
 
   if (isIntersection(x))
-    return x.types.some(x => emptyIntersection(x, y));
+    return x.types.every(x => overlaps(x, y));
   if (isIntersection(y))
-    return y.types.some(y => emptyIntersection(x, y));
+    return y.types.every(y => overlaps(x, y));
 
-  if (isSingleton(x) && isSingleton(y)) return x.value != y.value;
-  if (isSingleton(x)) return x.base.type !== y.type;
-  if (isSingleton(y)) return y.base.type !== x.type;
+  if (isSingleton(x) && isSingleton(y)) return x.value === y.value;
+  if (isSingleton(x)) return x.base.type === y.type;
+  if (isSingleton(y)) return y.base.type === x.type;
   if (isObject(x) && isObject(y)) {
-    return x.properties.some(({ name, type: xType }) => {
+    return x.properties.every(({ name, type: xType }) => {
       const yType = propType(y, name);
-      if (!yType) return false;
-      else return emptyIntersection(xType, yType);
+      if (!yType) return true;
+      else return overlaps(xType, yType);
     });
   }
-  return x.type !== y.type;
+  return x.type === y.type;
 }
 
 function intersectionNoUnion(ts: Type[]): Type {
   if (ts.some((t1, i1) => ts.some((t2, i2) =>
-    i1 < i2 && emptyIntersection(t1, t2)
+    i1 < i2 && !overlaps(t1, t2)
   )))
     return never;
   ts = collapseSupertypes(ts);
