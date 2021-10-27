@@ -4,6 +4,7 @@ import isSubtype from './isSubtype';
 import { never } from './constructors';
 import { isUnion } from './validators';
 
+const collapseSubtypes = Trace.instrument('collapseSubtypes',
 function collapseSubtypes(ts: Type[]): Type[] {
   return ts.filter((t1, i1) =>
     ts.every((t2, i2) =>
@@ -13,12 +14,15 @@ function collapseSubtypes(ts: Type[]): Type[] {
     )
   );
 }
+);
 
+const flatten = Trace.instrument('flatten',
 function flatten(ts: Type[]): Type[] {
   return ([] as Type[]).concat(
     ...ts.map(t => isUnion(t) ? t.types : t)
   );
 }
+);
 
 const union = Trace.instrument('union',
 function union(...types: Type[]): Type {

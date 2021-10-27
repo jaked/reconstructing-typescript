@@ -34,6 +34,11 @@ const types = (types: Type[]) => {
   return elems;
 }
 
+const typeArray = (ts: Type[]) =>
+  <React.Fragment>
+    <b>[</b>{types(ts)}<b>]</b>
+  </React.Fragment>
+
 const env = (env: Env) => {
   const bindings: string[] = [];
   for (const [name, type] of env.entries()) {
@@ -81,6 +86,8 @@ const functions: { [name: string]: FunctionDescriptor } = {
   synthUnary: { args: [env, expression], ret: type },
 
   union: { args: type, ret: type },
+  flatten: { args: typeArray, ret: typeArray },
+  collapseSubtypes: { args: typeArray, ret: typeArray },
 }
 
 const instrumentedFunction = (fn: any) => {
