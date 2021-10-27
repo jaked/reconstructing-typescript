@@ -24,7 +24,8 @@ function flatten(ts: Type[]): Type[] {
 }
 );
 
-export function distributeUnion(ts: Type[]): Type[][] {
+export const distributeUnion = Trace.instrument('distributeUnion',
+function distributeUnion(ts: Type[]): Type[][] {
   const accum: Type[][] = [];
 
   function dist(ts: Type[], i: number): void {
@@ -46,6 +47,7 @@ export function distributeUnion(ts: Type[]): Type[][] {
   dist(ts, 0);
   return accum;
 }
+);
 
 export const union = Trace.instrument('union',
 function union(...types: Type[]): Type {

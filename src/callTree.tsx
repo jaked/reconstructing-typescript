@@ -39,6 +39,18 @@ const typeArray = (ts: Type[]) =>
     <b>[</b>{types(ts)}<b>]</b>
   </React.Fragment>
 
+const typeArrayArray = (tss: Type[][]) => {
+  const elems: React.ReactElement[] = [];
+  elems.push(<b>[</b>);
+  tss.forEach((ts, i) => {
+    elems.push(typeArray(ts));
+    if (i < tss.length - 1)
+      elems.push(<b>, </b>);
+  });
+  elems.push(<b>]</b>);
+  return <React.Fragment>{elems}</React.Fragment>;
+}
+
 const env = (env: Env) => {
   const bindings: string[] = [];
   for (const [name, type] of env.entries()) {
@@ -108,6 +120,9 @@ const functions: { [name: string]: FunctionDescriptor } = {
   collapseSubtypes: { args: [typeArray], ret: typeArray },
   intersection: { args: type, ret: type },
   collapseSupertypes: { args: [typeArray], ret: typeArray },
+  overlaps: { args: [type, type], ret: boolean },
+  intersectionNoUnion: { args: [typeArray], ret: type },
+  distributeUnion: { args: [typeArray], ret: typeArrayArray },
 }
 
 const Args = ({ call }: { call: Trace.call }) => {
@@ -125,6 +140,11 @@ const Args = ({ call }: { call: Trace.call }) => {
 
   for (let i = 0; i < call.args.length; i++) {
     const arg = Array.isArray(func.args) ? func.args[i] : func.args;
+    if (!arg) {
+      console.log(func);
+      console.log(call);
+      console.log(i);
+    }
     args.push(arg(call.args[i]));
     if (i < call.args.length - 1)
       args.push(<b>, </b>);
@@ -133,7 +153,7 @@ const Args = ({ call }: { call: Trace.call }) => {
   return <>{args}</>;
 }
 
-const Result = ({ call }: { call: Trace.call }) => {
+const Result = ({ call }: { call: Trace.call }): JSX.Element => {
   if ('error' in call.result) {
     const error = call.result.error as Error;
     return <span style={{ color: 'red' }}>{error.message}</span>

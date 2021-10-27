@@ -131,6 +131,17 @@ describe('intersections', () => {
     ).toBe(true);
   });
 
+  it('incomplete subtyping', () => {
+    expectIsSubtype(
+      "{ foo: { bar: 7 } & { baz: 9 } }",
+      "{ foo: { bar: 7 } } & { foo: { baz: 9 } }"
+    ).toBe(true);
+    expectIsSubtype(
+      "{ foo: { bar: 7 } } & { foo: { baz: 9 } }",
+      "{ foo: { bar: 7 } & { baz: 9 } }"
+    ).toBe(false);
+  });
+
   it('not some on left', () => {
     expectIsSubtype(
       "{ bar: string } & { baz: boolean }",
