@@ -8,6 +8,7 @@ See
 * Part 2 [functions and function calls](https://jaked.org/blog/2021-09-27-Reconstructing-TypeScript-part-2)
 * Part 3 [operators and singleton types](https://jaked.org/blog/2021-10-06-Reconstructing-TypeScript-part-3)
 * Part 4 [union types](https://jaked.org/blog/2021-10-14-Reconstructing-TypeScript-part-4)
+* Part 5 [intersection types](https://jaked.org/blog/2021-10-28-Reconstructing-TypeScript-part-5)
 
 ``` shell
 git clone --recurse-submodules https://github.com/jaked/reconstructing-typescript.git
