@@ -37,6 +37,8 @@ const types = types2 => {
   return elems;
 };
 
+const typeArray = ts => /* @__PURE__ */React.createElement(React.Fragment, null, /* @__PURE__ */React.createElement("b", null, "["), types(ts), /* @__PURE__ */React.createElement("b", null, "]"));
+
 const env = env2 => {
   const bindings = [];
 
@@ -97,6 +99,8 @@ const Args = ({
     args.push(type(call.args[1]));
   } else if (call.name === "union") {
     args.push(...types(call.args));
+  } else if (call.name === "flatten" || call.name === "collapseSubtypes") {
+    args.push(typeArray(call.args[0]));
   } else bug(`unexpected call name ${call.name}`);
 
   return /* @__PURE__ */React.createElement(React.Fragment, null, args);
@@ -129,6 +133,8 @@ const Result = ({
       return /* @__PURE__ */React.createElement("span", null, call.result.value ? "true" : "false");
     } else if (call.name === "union") {
       return type(call.result.value);
+    } else if (call.name === "flatten" || call.name === "collapseSubtypes") {
+      return typeArray(call.result.value);
     } else bug(`unexpected call name ${call.name}`);
   }
 };
