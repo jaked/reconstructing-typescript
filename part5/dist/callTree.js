@@ -37,6 +37,19 @@ const types = types2 => {
   return elems;
 };
 
+const typeArray = ts => /* @__PURE__ */React.createElement(React.Fragment, null, /* @__PURE__ */React.createElement("b", null, "["), types(ts), /* @__PURE__ */React.createElement("b", null, "]"));
+
+const typeArrayArray = tss => {
+  const elems = [];
+  elems.push( /* @__PURE__ */React.createElement("b", null, "["));
+  tss.forEach((ts, i) => {
+    elems.push(typeArray(ts));
+    if (i < tss.length - 1) elems.push( /* @__PURE__ */React.createElement("b", null, ", "));
+  });
+  elems.push( /* @__PURE__ */React.createElement("b", null, "]"));
+  return /* @__PURE__ */React.createElement(React.Fragment, null, elems);
+};
+
 const env = env2 => {
   const bindings = [];
 
@@ -91,12 +104,14 @@ const Args = ({
     args.push(expression(call.args[1]));
     args.push( /* @__PURE__ */React.createElement("b", null, ", "));
     args.push(type(call.args[2]));
-  } else if (call.name === "isSubtype") {
+  } else if (call.name === "isSubtype" || call.name === "overlaps") {
     args.push(type(call.args[0]));
     args.push( /* @__PURE__ */React.createElement("b", null, ", "));
     args.push(type(call.args[1]));
   } else if (call.name === "union" || call.name === "intersection") {
     args.push(...types(call.args));
+  } else if (call.name === "flatten" || call.name === "collapseSubtypes" || call.name === "collapseSupertypes" || call.name === "intersectionNoUnion" || call.name === "distributeUnion") {
+    args.push(typeArray(call.args[0]));
   } else bug(`unexpected call name ${call.name}`);
 
   return /* @__PURE__ */React.createElement(React.Fragment, null, args);
@@ -125,10 +140,14 @@ const Result = ({
           color: "#aaaaaa"
         }
       }, "returned");
-    } else if (call.name === "isSubtype") {
+    } else if (call.name === "isSubtype" || call.name === "overlaps") {
       return /* @__PURE__ */React.createElement("span", null, call.result.value ? "true" : "false");
-    } else if (call.name === "union" || call.name === "intersection") {
+    } else if (call.name === "union" || call.name === "intersection" || call.name === "intersectionNoUnion") {
       return type(call.result.value);
+    } else if (call.name === "flatten" || call.name === "collapseSubtypes" || call.name === "collapseSupertypes") {
+      return typeArray(call.result.value);
+    } else if (call.name === "distributeUnion") {
+      return typeArrayArray(call.result.value);
     } else bug(`unexpected call name ${call.name}`);
   }
 };
