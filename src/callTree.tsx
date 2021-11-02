@@ -19,19 +19,49 @@ const type = (type: Type) => {
   return <span dangerouslySetInnerHTML={{ __html }} />;
 }
 
+const none = () => {
+  return <i style={{ color: "#aaaaaa"}}>returned</i>
+}
+
+const boolean = (value: boolean) => {
+  return <span>{value ? 'true' : 'false'}</span>;
+}
+
+type ValueDescriptor = ((value: any) => React.ReactElement)
+
+type FunctionDescriptor = {
+  args: ValueDescriptor[],
+  ret: ValueDescriptor
+}
+
+const functions: { [name: string]: FunctionDescriptor } = {
+  check: { args: [expression, type], ret: none },
+  checkObject: { args: [expression, type], ret: none },
+
+  isSubtype: { args: [type, type], ret: boolean },
+
+  synth: { args: [expression], ret: type },
+  synthNull: { args: [expression], ret: type },
+  synthBoolean: { args: [expression], ret: type },
+  synthNumber: { args: [expression], ret: type },
+  synthString: { args: [expression], ret: type },
+  synthObject: { args: [expression], ret: type },
+  synthMember: { args: [expression], ret: type },
+  synthTSAs: { args: [expression], ret: type },
+}
+
 const Args = ({ call }: { call: Trace.call }) => {
   const args: React.ReactElement[] = [];
-  if (call.name.startsWith('synth')) {
-    args.push(expression(call.args[0] as AST.Expression));
-  } else if (call.name.startsWith('check')) {
-    args.push(expression(call.args[0] as AST.Expression));
-    args.push(<b>, </b>);
-    args.push(type(call.args[1] as Type));
-  } else if (call.name === 'isSubtype') {
-    args.push(type(call.args[0] as Type));
-    args.push(<b>, </b>);
-    args.push(type(call.args[1] as Type));
-  } else bug(`unexpected call name ${call.name}`);
+
+  const func =
+    functions[call.name] ?? bug(`unexpected call name ${call.name}`);
+
+  for (let i = 0; i < func.args.length; i++) {
+    args.push(func.args[i](call.args[i]));
+    if (i < func.args.length - 1)
+      args.push(<b>, </b>);
+  }
+
   return <>{args}</>;
 }
 
@@ -40,13 +70,9 @@ const Result = ({ call }: { call: Trace.call }) => {
     const error = call.result.error as Error;
     return <span style={{ color: 'red' }}>{error.message}</span>
   } else {
-    if (call.name.startsWith('synth')) {
-      return type(call.result.value as Type);
-    } else if (call.name.startsWith('check')) {
-      return <i style={{ color: "#aaaaaa"}}>returned</i>;
-    } else if (call.name === 'isSubtype') {
-      return <span>{call.result.value ? 'true' : 'false'}</span>;
-    } else bug(`unexpected call name ${call.name}`);
+    const func =
+      functions[call.name] ?? bug(`unexpected call name ${call.name}`);
+    return func.ret(call.result.value);
   }
 }
 
