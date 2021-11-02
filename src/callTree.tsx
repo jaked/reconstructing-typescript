@@ -66,6 +66,9 @@ const functions: { [name: string]: FunctionDescriptor } = {
   synthTSAs: { args: [env, expression], ret: type },
   synthFunction: { args: [env, expression], ret: type },
   synthCall: { args: [env, expression], ret: type },
+  synthBinary: { args: [env, expression], ret: type },
+  synthLogical: { args: [env, expression], ret: type },
+  synthUnary: { args: [env, expression], ret: type },
 }
 
 const Args = ({ call }: { call: Trace.call }) => {
