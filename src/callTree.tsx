@@ -56,6 +56,15 @@ const boolean = (value: boolean) => {
   return <span>{value ? 'true' : 'false'}</span>;
 }
 
+const instrumentedFunction = (fn: any) => {
+  const name = fn.instrumentedName;
+  if (name.startsWith('...synth')) {
+    return <span><b>{name}</b>[{expression(fn.x)}]</span>
+  } else {
+    return <b>{name}</b>;
+  }
+}
+
 type ValueDescriptor = ((value: any) => React.ReactElement)
 
 type FunctionDescriptor = {
@@ -78,32 +87,39 @@ const functions: { [name: string]: FunctionDescriptor } = {
   synthString: { args: [env, expression], ret: type },
   synthObject: { args: [env, expression], ret: type },
   synthMember: { args: [env, expression], ret: type },
+  '...synthMember': { args: [type], ret: type },
   synthTSAs: { args: [env, expression], ret: type },
   synthFunction: { args: [env, expression], ret: type },
   synthCall: { args: [env, expression], ret: type },
+  '...synthCall': { args: [type], ret: type },
   synthBinary: { args: [env, expression], ret: type },
+  '...synthBinary': { args: [type, type], ret: type },
   synthLogical: { args: [env, expression], ret: type },
+  '...synthLogical': { args: [type, type], ret: type },
   synthUnary: { args: [env, expression], ret: type },
+  '...synthUnary': { args: [type], ret: type },
+
+  // see Args
+  map: { args: [type, instrumentedFunction], ret: type },
+  map2: { args: [type, type, instrumentedFunction], ret: type },
 
   union: { args: type, ret: type },
-  flatten: { args: typeArray, ret: typeArray },
-  collapseSubtypes: { args: typeArray, ret: typeArray },
-}
-
-const instrumentedFunction = (fn: any) => {
-  const name = fn.instrumentedName;
-  if (name.startsWith('...synth')) {
-    return <span><b>{name}</b>[{expression(fn.x)}]</span>
-  } else {
-    return <b>{name}</b>;
-  }
+  flatten: { args: [typeArray], ret: typeArray },
+  collapseSubtypes: { args: [typeArray], ret: typeArray },
 }
 
 const Args = ({ call }: { call: Trace.call }) => {
   const args: React.ReactElement[] = [];
 
-  const func =
-    functions[call.name] ?? bug(`unexpected call name ${call.name}`);
+  let func: FunctionDescriptor;
+  // I got fancy and overloaded Type.map
+  if (call.name === 'map' && call.args.length === 3) {
+    func = functions['map2']
+  } else {
+    func = functions[call.name]
+  }
+  if (!func)
+    bug(`unexpected call name ${call.name}`);
 
   for (let i = 0; i < call.args.length; i++) {
     const arg = Array.isArray(func.args) ? func.args[i] : func.args;
