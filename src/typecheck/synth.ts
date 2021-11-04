@@ -231,16 +231,14 @@ function synthUnary(env: Env, ast: AST.UnaryExpression): Type {
 const synthConditional = Trace.instrument('synthConditional',
 function synthConditional(env: Env, ast: AST.ConditionalExpression): Type {
   const test = synth(env, ast.test);
-  const consequent = synth(narrow(env, ast.test, true), ast.consequent);
-  const alternate = synth(narrow(env, ast.test, false), ast.alternate);
-  return Type.map(test, Trace.instrument('...synthConditional', test => {
-    if (Type.isTruthy(test))
-      return consequent;
-    else if (Type.isFalsy(test))
-      return alternate;
-    else
-      return Type.union(consequent, alternate);
-  }, { ...ast, test: underscore, consequent: underscore, alternate: underscore }));
+  const consequent = () => synth(narrow(env, ast.test, true), ast.consequent)
+  const alternate = () => synth(narrow(env, ast.test, false), ast.alternate);
+  if (Type.isTruthy(test))
+    return consequent();
+  else if (Type.isFalsy(test))
+    return alternate();
+  else
+    return Type.union(consequent(), alternate());
 }
 );
 

@@ -1,23 +1,24 @@
 import { Type } from './types';
 import { not, nullType, singleton } from './constructors';
+import { isFunction, isIntersection, isNull, isObject, isSingleton, isUnion } from './validators';
 import union from './union';
 import intersection from './intersection';
 
-export function isTruthy(type: Type) {
-  switch (type.type) {
-    case 'Object': return true;
-    case 'Function': return true;
-    case 'Singleton': return type.value;
-    default: return false;
-  }
+export function isTruthy(type: Type): unknown {
+  if (isObject(type)) return true;
+  if (isFunction(type)) return true;
+  if (isSingleton(type)) return type.value;
+  if (isUnion(type)) return type.types.every(isTruthy);
+  if (isIntersection(type)) return type.types.some(isTruthy);
+  return false;
 }
 
-export function isFalsy(type: Type) {
-  switch (type.type) {
-    case 'Null': return true;
-    case 'Singleton': return !type.value;
-    default: return false;
-  }
+export function isFalsy(type: Type): unknown {
+  if (isNull(type)) return true;
+  if (isSingleton(type)) return !type.value;
+  if (isUnion(type)) return type.types.every(isFalsy);
+  if (isIntersection(type)) return type.types.some(isFalsy);
+  return false;
 }
 
 export const falsy =

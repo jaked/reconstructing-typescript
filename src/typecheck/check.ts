@@ -4,6 +4,7 @@ import * as Trace from '../util/trace';
 import Type from '../type';
 import Env from './env';
 import synth from './synth';
+import narrow from './narrow';
 
 const checkObject = Trace.instrument('checkObject',
 function checkObject(env: Env, ast: AST.ObjectExpression, type: Type.Object) {
@@ -50,6 +51,22 @@ function checkFunction(env: Env, ast: AST.ArrowFunctionExpression, type: Type.Fu
 }
 );
 
+const checkConditional = Trace.instrument('checkConditional',
+function checkConditional(env: Env, ast: AST.ConditionalExpression, type: Type): void {
+  const test = synth(env, ast.test);
+  const consequent = () => check(narrow(env, ast.test, true), ast.consequent, type)
+  const alternate = () => check(narrow(env, ast.test, false), ast.alternate, type)
+  if (Type.isTruthy(test)) {
+    consequent();
+  } else if (Type.isFalsy(test)) {
+    alternate();
+  } else {
+    consequent();
+    alternate();
+  }
+}
+);
+
 const check = Trace.instrument('check',
 function (env: Env, ast: AST.Expression, type: Type): void {
   if (Type.isIntersection(type))
@@ -60,6 +77,9 @@ function (env: Env, ast: AST.Expression, type: Type): void {
 
   if (AST.isArrowFunctionExpression(ast) && Type.isFunction(type))
     return checkFunction(env, ast, type);
+
+  if (AST.isConditionalExpression(ast))
+    return checkConditional(env, ast, type);
 
   const synthType = synth(env, ast);
   if (!Type.isSubtype(synthType, type))
