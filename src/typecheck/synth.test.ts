@@ -81,10 +81,10 @@ describe('function', () => {
     );
   });
 
-  it('ok intersection', () => {
+  it('ok union', () => {
     expectSynth(
       '(x: number | string) => x',
-      '((x: number) => number) & ((x: string) => string)'
+      '(x: number | string) => number | string'
     );
   });
 });

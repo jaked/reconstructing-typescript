@@ -94,17 +94,13 @@ function synthFunction(env: Env, ast: AST.ArrowFunctionExpression): Type {
     };
   });
   const args = bindings.map(({ type }) => type);
-  const argsLists = Type.distributeUnion(args);
-  const funcTypes = argsLists.map(args => {
-    const bodyEnv =
-      bindings.reduce(
-        (env, { name }, i) => env.set(name, args[i]),
-        env
-      );
-    const ret = synth(bodyEnv, body);
-    return Type.functionType(args, ret);
-  })
-  return Type.intersection(...funcTypes);
+  const bodyEnv =
+    bindings.reduce(
+      (env, { name, type }) => env.set(name, type),
+      env
+    );
+  const ret = synth(bodyEnv, body);
+  return Type.functionType(args, ret);
 }
 );
 
