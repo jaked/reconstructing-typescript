@@ -88,6 +88,7 @@ const functions: { [name: string]: FunctionDescriptor } = {
   check: { args: [env, expression, type], ret: none },
   checkObject: { args: [env, expression, type], ret: none },
   checkFunction: { args: [env, expression, type], ret: none },
+  checkConditional: { args: [env, expression, type], ret: none },
 
   isSubtype: { args: [type, type], ret: boolean },
 
@@ -110,6 +111,8 @@ const functions: { [name: string]: FunctionDescriptor } = {
   '...synthLogical': { args: [type, type], ret: type },
   synthUnary: { args: [env, expression], ret: type },
   '...synthUnary': { args: [type], ret: type },
+  synthConditional: { args: [env, expression], ret: type },
+  '...synthConditional': { args: [type], ret: type },
 
   // see Args
   map: { args: [type, instrumentedFunction], ret: type },
@@ -123,6 +126,16 @@ const functions: { [name: string]: FunctionDescriptor } = {
   overlaps: { args: [type, type], ret: boolean },
   intersectionNoUnion: { args: [typeArray], ret: type },
   distributeUnion: { args: [typeArray], ret: typeArrayArray },
+
+  narrow: { args: [env, expression, boolean], ret: env },
+  narrowBinary: { args: [env, expression, boolean], ret: env },
+  narrowLogical: { args: [env, expression, boolean], ret: env },
+  narrowUnary: { args: [env, expression, boolean], ret: env },
+  narrowPath: { args: [env, expression, type], ret: env },
+  narrowPathIdentifier: { args: [env, expression, type], ret: env },
+  narrowPathMember: { args: [env, expression, type], ret: env },
+  narrowPathUnary: { args: [env, expression, type], ret: env },
+  narrowType: { args: [type, type], ret: type },
 }
 
 const Args = ({ call }: { call: Trace.call }) => {

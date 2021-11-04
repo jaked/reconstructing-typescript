@@ -1,6 +1,14 @@
 import { Type } from './types';
-import { isFunction, isString } from './validators';
+import { isFunction, isIntersection, isString, isUnion } from './validators';
 import { bug } from '../util/err'
+
+function toStringWithParens(type: Type) {
+  const typeString = toString(type);
+  if (isFunction(type) || isUnion(type) || isIntersection(type))
+    return `(${typeString})`;
+  else
+    return typeString;
+}
 
 export default function toString(type: Type): string {
   switch (type.type) {
@@ -32,26 +40,17 @@ export default function toString(type: Type): string {
 
     case 'Union':
       return type.types
-        .map(type => {
-          const typeString = toString(type);
-          if (isFunction(type))
-            return `(${typeString})`
-          else
-            return typeString;
-        })
+        .map(toStringWithParens)
         .join(' | ');
 
     case 'Intersection':
       return type.types
-        .map(type => {
-          const typeString = toString(type);
-          if (isFunction(type))
-            return `(${typeString})`
-          else
-            return typeString;
-        })
+        .map(toStringWithParens)
         .join(' & ');
 
-    default: bug(`unexpected ${type.type}`);
+    case 'Not':
+      return `!${toStringWithParens(type.base)}`;
+
+    default: bug(`unexpected ${(type as Type).type}`);
   }
 }
