@@ -10,7 +10,8 @@ import synth from './synth';
 export const narrowType = Trace.instrument('narrowType',
 function (x: Type, y: Type): Type {
   if (Type.isNever(x) || Type.isNever(y)) return Type.never;
-  if (Type.isUnknown(x)) return y;
+  // we shouldn't return y unless we know it doesn't contain Not
+  if (Type.isUnknown(x)) return x;
   if (Type.isUnknown(y)) return x;
 
   if (Type.isUnion(x))
