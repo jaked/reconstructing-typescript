@@ -5,13 +5,31 @@ import Type from '../type';
 import Env from './env';
 import synth from './synth';
 
+function widenNots(type: Type): Type {
+  switch (type.type) {
+    case 'Not': return Type.unknown;
+
+    case 'Union':
+      return Type.union(...type.types.map(widenNots));
+
+    case 'Intersection':
+      return Type.intersection(...type.types.map(widenNots));
+
+    case 'Object':
+      return Type.object(type.properties.map(
+        ({ name, type }) => ({ name, type: widenNots(type) })
+      ));
+
+    default: return type;
+  }
+}
+
 // 'b' may contain Not-types
 // result does not contain Not-types
 export const narrowType = Trace.instrument('narrowType',
 function (x: Type, y: Type): Type {
   if (Type.isNever(x) || Type.isNever(y)) return Type.never;
-  // we shouldn't return y unless we know it doesn't contain Not
-  if (Type.isUnknown(x)) return x;
+  if (Type.isUnknown(x)) return widenNots(y);
   if (Type.isUnknown(y)) return x;
 
   if (Type.isUnion(x))
