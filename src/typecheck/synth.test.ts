@@ -369,4 +369,15 @@ describe('typeof', () => {
       env
     );
   });
+
+  it('ok unknown', () => {
+    const env = Env({
+      x: Parse.parseType('unknown')
+    });
+    expectSynth(
+      'typeof x',
+      '"boolean" | "number" | "string" | "object" | "function"',
+      env
+    );
+  });
 });

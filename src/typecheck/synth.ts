@@ -204,6 +204,9 @@ function typeofType(type: Type): string {
   }
 }
 
+const typeofUnknownType =
+  Type.union(...['boolean','number','string','object','function'].map(Type.singleton))
+
 const synthUnary = Trace.instrument('synthUnary',
 function synthUnary(env: Env, ast: AST.UnaryExpression): Type {
   const argument = synth(env, ast.argument);
@@ -218,6 +221,8 @@ function synthUnary(env: Env, ast: AST.UnaryExpression): Type {
           return Type.boolean;
 
       case 'typeof':
+        if (Type.isNever(argument) || Type.isUnknown(argument))
+          return typeofUnknownType;
         return Type.singleton(typeofType(argument));
 
       default: bug(`unimplemented ${ast.operator}`);
