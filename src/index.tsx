@@ -14,10 +14,12 @@ const examples = {
   'object': '{ foo: 7, bar: "baz" }',
   'member': '{ foo: 7, bar: "baz" }.foo',
   'check object': '{ foo: 7, bar: "baz" } as { foo: number, bar: string }',
-  'check object error': `{
+  'check object error': `
+{
   x: 7,
   y: { a: "foo", b: "bar" }.b
-} as { x: number, y: number }`
+} as { x: number, y: number }
+`
 }
 
 const ScrollBox: React.FunctionComponent<{ gridArea: string }> = ({ gridArea, children }) =>
@@ -144,7 +146,7 @@ const App = () => {
       <Label gridArea='examplesLabel'>examples</Label>
       <div style={{ padding: '10px', gridArea: 'examples' }}>
         {Object.entries(examples).map(([ label, code ]) =>
-          <button onClick={(e) => { setCode(code) }}>{label}</button>
+          <button onClick={(e) => { setCode(code.trim()) }}>{label}</button>
         )}
       </div>
       <Label gridArea='editorLabel'>expression</Label>
