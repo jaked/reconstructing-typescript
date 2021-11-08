@@ -11,8 +11,14 @@ import CallTree from "./callTree.js";
 const examples = {
   function: "(x: number, y: number) => ({ x, y })",
   "nested function": "(x: number) => (y: number) => ({ x, y })",
-  "check function": "((x: number, y: number) => ({ x, y })) as (x: number, y: number) => { x: number, y: number }",
-  "check function error": "((x: number, y: number) => ({ x, y })) as (x: number, y: number) => { x: number, y: string }",
+  "check function": `
+((x: number, y: number) => ({ x, y })) as
+  (x: number, y: number) => { x: number, y: number }
+`,
+  "check function error": `
+((x: number, y: number) => ({ x, y })) as
+  (x: number, y: number) => { x: number, y: string }
+`,
   call: "((v: { x: number }) => v.x)({ x: 7 })",
   "call error": "((v: { x: number }) => v.x)({ x: true })",
   "call with function argument": "((f: (x: number) => number, x: number) => f(f(x)))(x => x, 7)"
@@ -149,7 +155,7 @@ const App = () => {
     }
   }, Object.entries(examples).map(([label, code2]) => /* @__PURE__ */React.createElement("button", {
     onClick: e => {
-      setCode(code2);
+      setCode(code2.trim());
     }
   }, label))), /* @__PURE__ */React.createElement(Label, {
     gridArea: "editorLabel"
