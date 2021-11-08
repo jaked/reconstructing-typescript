@@ -1,5 +1,11 @@
-import { isFunction, isString } from "./validators.js";
+import { isFunction, isIntersection, isString, isUnion } from "./validators.js";
 import { bug } from "../util/err.js";
+
+function toStringWithParens(type) {
+  const typeString = toString(type);
+  if (isFunction(type) || isUnion(type) || isIntersection(type)) return `(${typeString})`;else return typeString;
+}
+
 export default function toString(type) {
   switch (type.type) {
     case "Never":
@@ -39,16 +45,13 @@ export default function toString(type) {
       if (isString(type.base)) return `'${type.value}'`;else return `${type.value}`;
 
     case "Union":
-      return type.types.map(type2 => {
-        const typeString = toString(type2);
-        if (isFunction(type2)) return `(${typeString})`;else return typeString;
-      }).join(" | ");
+      return type.types.map(toStringWithParens).join(" | ");
 
     case "Intersection":
-      return type.types.map(type2 => {
-        const typeString = toString(type2);
-        if (isFunction(type2)) return `(${typeString})`;else return typeString;
-      }).join(" & ");
+      return type.types.map(toStringWithParens).join(" & ");
+
+    case "Not":
+      return `!${toStringWithParens(type.base)}`;
 
     default:
       bug(`unexpected ${type.type}`);

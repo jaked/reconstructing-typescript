@@ -1,37 +1,60 @@
 import * as AST from "../../_snowpack/pkg/@babel/types.js";
 import { bug } from "../util/err.js";
+import * as Trace from "../util/trace.js";
 import Type from "../type/index.js";
 import synth from "./synth.js";
-export function narrowType(a, b) {
-  if (Type.isNever(a) || Type.isNever(b)) return Type.never;
-  if (Type.isUnknown(a)) return b;
-  if (Type.isUnknown(b)) return a;
-  if (Type.isNull(a) && Type.isNull(b)) return a;
-  if (Type.isBoolean(a) && Type.isBoolean(b)) return a;
-  if (Type.isNumber(a) && Type.isNumber(b)) return a;
-  if (Type.isString(a) && Type.isString(b)) return a;
-  if (Type.isUnion(a)) return Type.union(...a.types.map(a2 => narrowType(a2, b)));
-  if (Type.isUnion(b)) return Type.union(...b.types.map(b2 => narrowType(a, b2)));
-  if (Type.isIntersection(a)) return Type.intersection(...a.types.map(a2 => narrowType(a2, b)));
-  if (Type.isIntersection(b)) return Type.intersection(...b.types.map(b2 => narrowType(a, b2)));
 
-  if (Type.isNot(b)) {
-    if (Type.isSubtype(a, b.base) && Type.isSubtype(b.base, a)) return Type.never;else if (Type.isBoolean(a) && Type.isSingleton(b.base) && Type.isBoolean(b.base.base)) {
-      if (b.base.value === true) return Type.singleton(false);else return Type.singleton(true);
-    } else return a;
+function widenNots(type) {
+  switch (type.type) {
+    case "Not":
+      return Type.unknown;
+
+    case "Union":
+      return Type.union(...type.types.map(widenNots));
+
+    case "Intersection":
+      return Type.intersection(...type.types.map(widenNots));
+
+    case "Object":
+      return Type.object(type.properties.map(({
+        name,
+        type: type2
+      }) => ({
+        name,
+        type: widenNots(type2)
+      })));
+
+    default:
+      return type;
+  }
+}
+
+export const narrowType = Trace.instrument("narrowType", function (x, y) {
+  if (Type.isNever(x) || Type.isNever(y)) return Type.never;
+  if (Type.isUnknown(x)) return widenNots(y);
+  if (Type.isUnknown(y)) return x;
+  if (Type.isUnion(x)) return Type.union(...x.types.map(a => narrowType(a, y)));
+  if (Type.isUnion(y)) return Type.union(...y.types.map(b => narrowType(x, b)));
+  if (Type.isIntersection(x)) return Type.intersection(...x.types.map(a => narrowType(a, y)));
+  if (Type.isIntersection(y)) return Type.intersection(...y.types.map(b => narrowType(x, b)));
+
+  if (Type.isNot(y)) {
+    if (Type.isSubtype(x, y.base) && Type.isSubtype(y.base, x)) return Type.never;else if (Type.isBoolean(x) && Type.isSingleton(y.base) && Type.isBoolean(y.base.base)) {
+      if (y.base.value === true) return Type.singleton(false);else return Type.singleton(true);
+    } else return x;
   }
 
-  if (Type.isSingleton(a) && Type.isSingleton(b)) return a.value === b.value ? a : Type.never;
-  if (Type.isSingleton(a)) return a.base.type === b.type ? a : Type.never;
-  if (Type.isSingleton(b)) return b.base.type === a.type ? b : Type.never;
+  if (Type.isSingleton(x) && Type.isSingleton(y)) return x.value === y.value ? x : Type.never;
+  if (Type.isSingleton(x)) return x.base.type === y.type ? x : Type.never;
+  if (Type.isSingleton(y)) return y.base.type === x.type ? y : Type.never;
 
-  if (Type.isObject(a) && Type.isObject(b)) {
-    const properties = a.properties.map(({
+  if (Type.isObject(x) && Type.isObject(y)) {
+    const properties = x.properties.map(({
       name,
-      type: aType
+      type: xType
     }) => {
-      const bType = Type.propType(b, name);
-      const type = bType ? narrowType(aType, bType) : aType;
+      const yType = Type.propType(y, name);
+      const type = yType ? narrowType(xType, yType) : xType;
       return {
         name,
         type
@@ -42,25 +65,22 @@ export function narrowType(a, b) {
     }) => Type.isNever(type))) return Type.never;else return Type.object(properties);
   }
 
-  return Type.never;
-}
-
-function narrowPathIdentifier(env, ast, otherType) {
+  return x.type === y.type ? x : Type.never;
+});
+const narrowPathIdentifier = Trace.instrument("narrowPathIdentifier", function narrowPathIdentifier2(env, ast, otherType) {
   const identType = env.get(ast.name);
   if (!identType) bug("expected bound identifer");
   const type = narrowType(identType, otherType);
   return env.set(ast.name, type);
-}
-
-function narrowPathMember(env, ast, otherType) {
+});
+const narrowPathMember = Trace.instrument("narrowPathMember", function narrowPathMember2(env, ast, otherType) {
   if (ast.computed) bug(`unimplemented computed`);
   if (!AST.isIdentifier(ast.property)) bug(`unexpected ${ast.property.type}`);
   return narrowPath(env, ast.object, Type.object({
     [ast.property.name]: otherType
   }));
-}
-
-function narrowPathUnary(env, ast, otherType) {
+});
+const narrowPathUnary = Trace.instrument("narrowPathUnary", function narrowPathUnary2(env, ast, otherType) {
   switch (ast.operator) {
     case "!":
       return env;
@@ -105,9 +125,8 @@ function narrowPathUnary(env, ast, otherType) {
     default:
       bug(`unexpected ${ast.operator}`);
   }
-}
-
-function narrowPath(env, ast, otherType) {
+});
+const narrowPath = Trace.instrument("narrowPath", function narrowPath2(env, ast, otherType) {
   switch (ast.type) {
     case "Identifier":
       return narrowPathIdentifier(env, ast, otherType);
@@ -121,9 +140,8 @@ function narrowPath(env, ast, otherType) {
     default:
       return env;
   }
-}
-
-function narrowUnary(env, ast, assume) {
+});
+const narrowUnary = Trace.instrument("narrowUnary", function narrowUnary2(env, ast, assume) {
   switch (ast.operator) {
     case "!":
       return narrow(env, ast.argument, !assume);
@@ -134,9 +152,8 @@ function narrowUnary(env, ast, assume) {
     default:
       bug(`unexpected ${ast.operator}`);
   }
-}
-
-function narrowLogical(env, ast, assume) {
+});
+const narrowLogical = Trace.instrument("narrowLogical", function narrowLogical2(env, ast, assume) {
   switch (ast.operator) {
     case "&&":
       if (assume) {
@@ -157,9 +174,8 @@ function narrowLogical(env, ast, assume) {
     default:
       bug(`unexpected AST ${ast.operator}`);
   }
-}
-
-function narrowBinary(env, ast, assume) {
+});
+const narrowBinary = Trace.instrument("narrowBinary", function narrowBinary2(env, ast, assume) {
   if (!AST.isExpression(ast.left)) bug(`unimplemented ${ast.left.type}`);
   const left = synth(env, ast.left);
   const right = synth(env, ast.right);
@@ -171,9 +187,8 @@ function narrowBinary(env, ast, assume) {
     env = narrowPath(env, ast.left, Type.not(right));
     return narrowPath(env, ast.right, Type.not(left));
   } else return env;
-}
-
-export function narrow(env, ast, assume) {
+});
+export const narrow = Trace.instrument("narrow", function narrow2(env, ast, assume) {
   switch (ast.type) {
     case "UnaryExpression":
       return narrowUnary(env, ast, assume);
@@ -192,5 +207,5 @@ export function narrow(env, ast, assume) {
       }
 
   }
-}
+});
 export default narrow;

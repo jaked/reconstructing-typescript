@@ -45,7 +45,7 @@ const intersectionNoUnion = Trace.instrument("intersectionNoUnion", function int
 });
 const intersection = Trace.instrument("intersection", function intersection2(...ts) {
   ts = flatten(ts);
-  ts = distributeUnion(ts).map(intersectionNoUnion);
+  ts = distributeUnion(ts).map(ts2 => intersectionNoUnion(ts2));
   return union(...ts);
 });
 export default intersection;

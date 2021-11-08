@@ -3,6 +3,7 @@ import { bug, err } from "../util/err.js";
 import * as Trace from "../util/trace.js";
 import Type from "../type/index.js";
 import synth from "./synth.js";
+import narrow from "./narrow.js";
 const checkObject = Trace.instrument("checkObject", function checkObject2(env, ast, type) {
   const astProps = ast.properties.map(prop => {
     if (!AST.isObjectProperty(prop)) bug(`unimplemented ${prop.type}`);
@@ -48,10 +49,27 @@ const checkFunction = Trace.instrument("checkFunction", function checkFunction2(
   }) => env2.set(name, type2), env);
   check(bodyEnv, ast.body, type.ret);
 });
-const check = Trace.instrument("check", function check2(env, ast, type) {
-  if (Type.isIntersection(type)) return type.types.forEach(type2 => check2(env, ast, type2));
+const checkConditional = Trace.instrument("checkConditional", function checkConditional2(env, ast, type) {
+  const test = synth(env, ast.test);
+
+  const consequent = () => check(narrow(env, ast.test, true), ast.consequent, type);
+
+  const alternate = () => check(narrow(env, ast.test, false), ast.alternate, type);
+
+  if (Type.isTruthy(test)) {
+    consequent();
+  } else if (Type.isFalsy(test)) {
+    alternate();
+  } else {
+    consequent();
+    alternate();
+  }
+});
+const check = Trace.instrument("check", function (env, ast, type) {
+  if (Type.isIntersection(type)) return type.types.forEach(type2 => check(env, ast, type2));
   if (AST.isObjectExpression(ast) && Type.isObject(type)) return checkObject(env, ast, type);
   if (AST.isArrowFunctionExpression(ast) && Type.isFunction(type)) return checkFunction(env, ast, type);
+  if (AST.isConditionalExpression(ast)) return checkConditional(env, ast, type);
   const synthType = synth(env, ast);
   if (!Type.isSubtype(synthType, type)) err(`expected ${Type.toString(type)}, got ${Type.toString(synthType)}`, ast);
 });

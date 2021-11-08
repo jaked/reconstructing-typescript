@@ -69,15 +69,12 @@ const synthFunction = Trace.instrument("synthFunction", function synthFunction2(
   const args = bindings.map(({
     type
   }) => type);
-  const argsLists = Type.distributeUnion(args);
-  const funcTypes = argsLists.map(args2 => {
-    const bodyEnv = bindings.reduce((env2, {
-      name
-    }, i) => env2.set(name, args2[i]), env);
-    const ret = synth(bodyEnv, body);
-    return Type.functionType(args2, ret);
-  });
-  return Type.intersection(...funcTypes);
+  const bodyEnv = bindings.reduce((env2, {
+    name,
+    type
+  }) => env2.set(name, type), env);
+  const ret = synth(bodyEnv, body);
+  return Type.functionType(args, ret);
 });
 const synthCall = Trace.instrument("synthCall", function synthCall2(env, ast) {
   if (!AST.isExpression(ast.callee)) bug(`unimplemented ${ast.callee.type}`);
@@ -175,6 +172,7 @@ function typeofType(type) {
   }
 }
 
+const typeofUnknownType = Type.union(...["boolean", "number", "string", "object", "function"].map(Type.singleton));
 const synthUnary = Trace.instrument("synthUnary", function synthUnary2(env, ast) {
   const argument = synth(env, ast.argument);
   return Type.map(argument, Trace.instrument("...synthUnary", argument2 => {
@@ -183,6 +181,7 @@ const synthUnary = Trace.instrument("synthUnary", function synthUnary2(env, ast)
         if (Type.isTruthy(argument2)) return Type.singleton(false);else if (Type.isFalsy(argument2)) return Type.singleton(true);else return Type.boolean;
 
       case "typeof":
+        if (Type.isNever(argument2) || Type.isUnknown(argument2)) return typeofUnknownType;
         return Type.singleton(typeofType(argument2));
 
       default:
@@ -194,15 +193,12 @@ const synthUnary = Trace.instrument("synthUnary", function synthUnary2(env, ast)
 });
 const synthConditional = Trace.instrument("synthConditional", function synthConditional2(env, ast) {
   const test = synth(env, ast.test);
-  const consequent = synth(narrow(env, ast.test, true), ast.consequent);
-  const alternate = synth(narrow(env, ast.test, false), ast.alternate);
-  return Type.map(test, Trace.instrument("...synthConditional", test2 => {
-    if (Type.isTruthy(test2)) return consequent;else if (Type.isFalsy(test2)) return alternate;else return Type.union(consequent, alternate);
-  }, { ...ast,
-    test: underscore,
-    consequent: underscore,
-    alternate: underscore
-  }));
+
+  const consequent = () => synth(narrow(env, ast.test, true), ast.consequent);
+
+  const alternate = () => synth(narrow(env, ast.test, false), ast.alternate);
+
+  if (Type.isTruthy(test)) return consequent();else if (Type.isFalsy(test)) return alternate();else return Type.union(consequent(), alternate());
 });
 const synth = Trace.instrument("synth", function synth2(env, ast) {
   switch (ast.type) {
