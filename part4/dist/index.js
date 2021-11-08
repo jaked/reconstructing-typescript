@@ -147,7 +147,7 @@ const App = () => {
     }
   }, Object.entries(examples).map(([label, code2]) => /* @__PURE__ */React.createElement("button", {
     onClick: e => {
-      setCode(code2);
+      setCode(code2.trim());
     }
   }, label))), /* @__PURE__ */React.createElement(Label, {
     gridArea: "editorLabel"

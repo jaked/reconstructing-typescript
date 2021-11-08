@@ -54,6 +54,18 @@ const env = env2 => {
   });
 };
 
+const none = () => {
+  return /* @__PURE__ */React.createElement("i", {
+    style: {
+      color: "#aaaaaa"
+    }
+  }, "returned");
+};
+
+const boolean = value => {
+  return /* @__PURE__ */React.createElement("span", null, value ? "true" : "false");
+};
+
 const instrumentedFunction = fn => {
   const name = fn.instrumentedName;
 
@@ -64,44 +76,140 @@ const instrumentedFunction = fn => {
   }
 };
 
+const functions = {
+  check: {
+    args: [env, expression, type],
+    ret: none
+  },
+  checkObject: {
+    args: [env, expression, type],
+    ret: none
+  },
+  checkFunction: {
+    args: [env, expression, type],
+    ret: none
+  },
+  isSubtype: {
+    args: [type, type],
+    ret: boolean
+  },
+  synth: {
+    args: [env, expression],
+    ret: type
+  },
+  synthIdentifier: {
+    args: [env, expression],
+    ret: type
+  },
+  synthNull: {
+    args: [env, expression],
+    ret: type
+  },
+  synthBoolean: {
+    args: [env, expression],
+    ret: type
+  },
+  synthNumber: {
+    args: [env, expression],
+    ret: type
+  },
+  synthString: {
+    args: [env, expression],
+    ret: type
+  },
+  synthObject: {
+    args: [env, expression],
+    ret: type
+  },
+  synthMember: {
+    args: [env, expression],
+    ret: type
+  },
+  "...synthMember": {
+    args: [type],
+    ret: type
+  },
+  synthTSAs: {
+    args: [env, expression],
+    ret: type
+  },
+  synthFunction: {
+    args: [env, expression],
+    ret: type
+  },
+  synthCall: {
+    args: [env, expression],
+    ret: type
+  },
+  "...synthCall": {
+    args: [type],
+    ret: type
+  },
+  synthBinary: {
+    args: [env, expression],
+    ret: type
+  },
+  "...synthBinary": {
+    args: [type, type],
+    ret: type
+  },
+  synthLogical: {
+    args: [env, expression],
+    ret: type
+  },
+  "...synthLogical": {
+    args: [type, type],
+    ret: type
+  },
+  synthUnary: {
+    args: [env, expression],
+    ret: type
+  },
+  "...synthUnary": {
+    args: [type],
+    ret: type
+  },
+  map: {
+    args: [type, instrumentedFunction],
+    ret: type
+  },
+  map2: {
+    args: [type, type, instrumentedFunction],
+    ret: type
+  },
+  union: {
+    args: type,
+    ret: type
+  },
+  flatten: {
+    args: [typeArray],
+    ret: typeArray
+  },
+  collapseSubtypes: {
+    args: [typeArray],
+    ret: typeArray
+  }
+};
+
 const Args = ({
   call
 }) => {
   const args = [];
+  let func;
 
-  if (call.name.startsWith("synth")) {
-    args.push(env(call.args[0]));
-    args.push( /* @__PURE__ */React.createElement("b", null, ", "));
-    args.push(expression(call.args[1]));
-  } else if (call.name.startsWith("...synth")) {
-    for (let i = 0; i < call.args.length; i++) {
-      args.push(type(call.args[i]));
-      if (i < call.args.length - 1) args.push( /* @__PURE__ */React.createElement("b", null, ", "));
-    }
-  } else if (call.name === "map") {
-    let i = 0;
+  if (call.name === "map" && call.args.length === 3) {
+    func = functions["map2"];
+  } else {
+    func = functions[call.name];
+  }
 
-    for (i; i < call.args.length - 1; i++) {
-      args.push(type(call.args[i]));
-      args.push( /* @__PURE__ */React.createElement("b", null, ", "));
-    }
+  if (!func) bug(`unexpected call name ${call.name}`);
 
-    args.push(instrumentedFunction(call.args[i]));
-  } else if (call.name.startsWith("check")) {
-    args.push(env(call.args[0]));
-    args.push( /* @__PURE__ */React.createElement("b", null, ", "));
-    args.push(expression(call.args[1]));
-    args.push( /* @__PURE__ */React.createElement("b", null, ", "));
-    args.push(type(call.args[2]));
-  } else if (call.name === "isSubtype") {
-    args.push(type(call.args[0]));
-    args.push( /* @__PURE__ */React.createElement("b", null, ", "));
-    args.push(type(call.args[1]));
-  } else if (call.name === "union") {
-    args.push(...types(call.args));
-  } else if (call.name === "flatten" || call.name === "collapseSubtypes") {
-    args.push(typeArray(call.args[0]));
-  } else bug(`unexpected call name ${call.name}`);
+  for (let i = 0; i < call.args.length; i++) {
+    const arg = Array.isArray(func.args) ? func.args[i] : func.args;
+    args.push(arg(call.args[i]));
+    if (i < call.args.length - 1) args.push( /* @__PURE__ */React.createElement("b", null, ", "));
+  }
 
   return /* @__PURE__ */React.createElement(React.Fragment, null, args);
 };
@@ -117,25 +225,8 @@ const Result = ({
       }
     }, error.message);
   } else {
-    if (call.name.startsWith("synth")) {
-      return type(call.result.value);
-    } else if (call.name.startsWith("...synth")) {
-      return type(call.result.value);
-    } else if (call.name === "map") {
-      return type(call.result.value);
-    } else if (call.name.startsWith("check")) {
-      return /* @__PURE__ */React.createElement("i", {
-        style: {
-          color: "#aaaaaa"
-        }
-      }, "returned");
-    } else if (call.name === "isSubtype") {
-      return /* @__PURE__ */React.createElement("span", null, call.result.value ? "true" : "false");
-    } else if (call.name === "union") {
-      return type(call.result.value);
-    } else if (call.name === "flatten" || call.name === "collapseSubtypes") {
-      return typeArray(call.result.value);
-    } else bug(`unexpected call name ${call.name}`);
+    const func = functions[call.name] ?? bug(`unexpected call name ${call.name}`);
+    return func.ret(call.result.value);
   }
 };
 
