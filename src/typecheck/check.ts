@@ -51,7 +51,7 @@ function checkFunction(env: Env, ast: AST.ArrowFunctionExpression, type: Type.Fu
 );
 
 const check = Trace.instrument('check',
-function check(env: Env, ast: AST.Expression, type: Type): void {
+function (env: Env, ast: AST.Expression, type: Type): void {
   if (Type.isIntersection(type))
     return type.types.forEach(type => check(env, ast, type));
 
