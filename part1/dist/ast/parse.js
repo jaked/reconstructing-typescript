@@ -4,7 +4,8 @@ import { bug } from "../util/err.js";
 import Type from "../type/index.js";
 export function parseExpression(input) {
   return Babel.parseExpression(input, {
-    plugins: ["typescript"]
+    plugins: ["typescript"],
+    attachComment: false
   });
 }
 export function parseType(input) {

@@ -24,22 +24,75 @@ const type = type2 => {
   });
 };
 
+const none = () => {
+  return /* @__PURE__ */React.createElement("i", {
+    style: {
+      color: "#aaaaaa"
+    }
+  }, "returned");
+};
+
+const boolean = value => {
+  return /* @__PURE__ */React.createElement("span", null, value ? "true" : "false");
+};
+
+const functions = {
+  check: {
+    args: [expression, type],
+    ret: none
+  },
+  checkObject: {
+    args: [expression, type],
+    ret: none
+  },
+  isSubtype: {
+    args: [type, type],
+    ret: boolean
+  },
+  synth: {
+    args: [expression],
+    ret: type
+  },
+  synthNull: {
+    args: [expression],
+    ret: type
+  },
+  synthBoolean: {
+    args: [expression],
+    ret: type
+  },
+  synthNumber: {
+    args: [expression],
+    ret: type
+  },
+  synthString: {
+    args: [expression],
+    ret: type
+  },
+  synthObject: {
+    args: [expression],
+    ret: type
+  },
+  synthMember: {
+    args: [expression],
+    ret: type
+  },
+  synthTSAs: {
+    args: [expression],
+    ret: type
+  }
+};
+
 const Args = ({
   call
 }) => {
   const args = [];
+  const func = functions[call.name] ?? bug(`unexpected call name ${call.name}`);
 
-  if (call.name.startsWith("synth")) {
-    args.push(expression(call.args[0]));
-  } else if (call.name.startsWith("check")) {
-    args.push(expression(call.args[0]));
-    args.push( /* @__PURE__ */React.createElement("b", null, ", "));
-    args.push(type(call.args[1]));
-  } else if (call.name === "isSubtype") {
-    args.push(type(call.args[0]));
-    args.push( /* @__PURE__ */React.createElement("b", null, ", "));
-    args.push(type(call.args[1]));
-  } else bug(`unexpected call name ${call.name}`);
+  for (let i = 0; i < func.args.length; i++) {
+    args.push(func.args[i](call.args[i]));
+    if (i < func.args.length - 1) args.push( /* @__PURE__ */React.createElement("b", null, ", "));
+  }
 
   return /* @__PURE__ */React.createElement(React.Fragment, null, args);
 };
@@ -55,17 +108,8 @@ const Result = ({
       }
     }, error.message);
   } else {
-    if (call.name.startsWith("synth")) {
-      return type(call.result.value);
-    } else if (call.name.startsWith("check")) {
-      return /* @__PURE__ */React.createElement("i", {
-        style: {
-          color: "#aaaaaa"
-        }
-      }, "returned");
-    } else if (call.name === "isSubtype") {
-      return /* @__PURE__ */React.createElement("span", null, call.result.value ? "true" : "false");
-    } else bug(`unexpected call name ${call.name}`);
+    const func = functions[call.name] ?? bug(`unexpected call name ${call.name}`);
+    return func.ret(call.result.value);
   }
 };
 
