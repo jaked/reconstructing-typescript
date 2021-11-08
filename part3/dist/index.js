@@ -12,10 +12,19 @@ const examples = {
   "+": "7 + 9",
   "typeof and ===": `typeof 'foo' === 'string'`,
   "+ function": "(x: 7, y: 9) => x + y",
-  "check + function": "((x, y) => x + y) as (x: 7, y: 9) => 16",
-  "check + function error": "((x, y) => x + y + 1) as (x: 7, y: 9) => 16",
+  "check + function": `
+((x, y) => x + y) as
+  (x: 7, y: 9) => 16
+`,
+  "check + function error": `
+((x, y) => x + y + 1) as
+  (x: 7, y: 9) => 16
+`,
   "&& function": "(x: 7, y: 9) => x && y",
-  "check && function": `((x, y) => x && y) as (x: false, y: 'foo') => false`
+  "check && function": `
+((x, y) => x && y) as
+  (x: false, y: 'foo') => false
+`
 };
 
 const ScrollBox = ({
@@ -149,7 +158,7 @@ const App = () => {
     }
   }, Object.entries(examples).map(([label, code2]) => /* @__PURE__ */React.createElement("button", {
     onClick: e => {
-      setCode(code2);
+      setCode(code2.trim());
     }
   }, label))), /* @__PURE__ */React.createElement(Label, {
     gridArea: "editorLabel"
