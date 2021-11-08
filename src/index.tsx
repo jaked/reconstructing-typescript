@@ -11,12 +11,45 @@ import Env from './typecheck/env';
 import CallTree from './callTree';
 
 const examples = {
-  'object': '{ foo: 7, bar: 9 } as { foo: number } & { bar: number }',
-  'object error': '{ foo: 7, bar: true } as { foo: number } & { bar: number }',
-  'synth function': '(x: 7 | 9) => x',
-  'check function': '(x => x) as ((x: 7) => 7) & ((x: 9) => 9)',
-  'check function error': '(x => x) as ((x: 7) => 7) & ((x: 7) => 9)',
-  'empty intersection': '{} as { foo: 7 } & { foo: 9 }',
+  'conditional': `
+(x: unknown) => x ? 'true' : 'false'
+`,
+  'conditional check intersection': `
+(x => x ? 'true' : 'false') as
+  ((x: 0) => 'false') & ((x: 1) => 'true')
+`,
+  'conditional check error': `
+((x: unknown) => x ? { foo: 7 } : { foo: 'nine' }) as
+  (x: unknown) => { foo: number }
+`,
+  truthy: `
+// result type is unknown;
+// we can't enumerate the truthy values
+(x: unknown) => x ? x : 'x is falsy'
+`,
+  falsy: `
+// result type is the falsy values
+// (and 'x is truthy')
+(x: unknown) => x ? 'x is truthy' : x
+`,
+  typeof: `
+// x is narrowed to number in the consequent
+(x: unknown) => typeof x === 'number' ? x : 0
+`,
+  '&&': `
+// x is narrowed from left to right
+(x: null | { y: null | { z: null | true } }) =>
+  x && x.y && x.y.z && "ok"
+`,
+  '===': `
+(x: { foo: 7 | 9 }, y: { foo: 7 | 11 }) =>
+  x === y ? x : null
+`,
+  variant: `
+// x is narrowed to one arm of union in consequent and alternate
+(x: { type: 'a', a: boolean } | { type: 'b', b: string }) =>
+  x.type === 'a' ? x.a : x.b
+`,
 }
 
 const ScrollBox: React.FunctionComponent<{ gridArea: string }> = ({ gridArea, children }) =>
