@@ -48,8 +48,8 @@ const checkFunction = Trace.instrument("checkFunction", function checkFunction2(
   }) => env2.set(name, type2), env);
   check(bodyEnv, ast.body, type.ret);
 });
-const check = Trace.instrument("check", function check2(env, ast, type) {
-  if (Type.isIntersection(type)) return type.types.forEach(type2 => check2(env, ast, type2));
+const check = Trace.instrument("check", function (env, ast, type) {
+  if (Type.isIntersection(type)) return type.types.forEach(type2 => check(env, ast, type2));
   if (AST.isObjectExpression(ast) && Type.isObject(type)) return checkObject(env, ast, type);
   if (AST.isArrowFunctionExpression(ast) && Type.isFunction(type)) return checkFunction(env, ast, type);
   const synthType = synth(env, ast);

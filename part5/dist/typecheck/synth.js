@@ -174,6 +174,7 @@ function typeofType(type) {
   }
 }
 
+const typeofUnknownType = Type.union(...["boolean", "number", "string", "object", "function"].map(Type.singleton));
 const synthUnary = Trace.instrument("synthUnary", function synthUnary2(env, ast) {
   const argument = synth(env, ast.argument);
   return Type.map(argument, Trace.instrument("...synthUnary", argument2 => {
@@ -182,6 +183,7 @@ const synthUnary = Trace.instrument("synthUnary", function synthUnary2(env, ast)
         if (Type.isTruthy(argument2)) return Type.singleton(false);else if (Type.isFalsy(argument2)) return Type.singleton(true);else return Type.boolean;
 
       case "typeof":
+        if (Type.isNever(argument2) || Type.isUnknown(argument2)) return typeofUnknownType;
         return Type.singleton(typeofType(argument2));
 
       default:
