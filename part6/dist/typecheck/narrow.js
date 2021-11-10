@@ -39,9 +39,13 @@ export const narrowType = Trace.instrument("narrowType", function (x, y) {
   if (Type.isIntersection(y)) return Type.intersection(...y.types.map(b => narrowType(x, b)));
 
   if (Type.isNot(y)) {
-    if (Type.isSubtype(x, y.base) && Type.isSubtype(y.base, x)) return Type.never;else if (Type.isBoolean(x) && Type.isSingleton(y.base) && Type.isBoolean(y.base.base)) {
-      if (y.base.value === true) return Type.singleton(false);else return Type.singleton(true);
-    } else return x;
+    if (Type.isSubtype(x, y.base)) {
+      return Type.never;
+    } else if (Type.isBoolean(x) && Type.isSingleton(y.base) && Type.isBoolean(y.base.base)) {
+      return Type.singleton(!y.base.value);
+    } else {
+      return x;
+    }
   }
 
   if (Type.isSingleton(x) && Type.isSingleton(y)) return x.value === y.value ? x : Type.never;
@@ -65,29 +69,28 @@ export const narrowType = Trace.instrument("narrowType", function (x, y) {
     }) => Type.isNever(type))) return Type.never;else return Type.object(properties);
   }
 
-  return x.type === y.type ? x : Type.never;
+  return Type.intersection(x, y);
 });
-const narrowPathIdentifier = Trace.instrument("narrowPathIdentifier", function narrowPathIdentifier2(env, ast, otherType) {
-  const identType = env.get(ast.name);
-  if (!identType) bug("expected bound identifer");
-  const type = narrowType(identType, otherType);
-  return env.set(ast.name, type);
+const narrowPathIdentifier = Trace.instrument("narrowPathIdentifier", function narrowPathIdentifier2(env, ast, type) {
+  const ident = env.get(ast.name);
+  if (!ident) bug("expected bound identifer");
+  return env.set(ast.name, narrowType(ident, type));
 });
-const narrowPathMember = Trace.instrument("narrowPathMember", function narrowPathMember2(env, ast, otherType) {
+const narrowPathMember = Trace.instrument("narrowPathMember", function narrowPathMember2(env, ast, type) {
   if (ast.computed) bug(`unimplemented computed`);
   if (!AST.isIdentifier(ast.property)) bug(`unexpected ${ast.property.type}`);
   return narrowPath(env, ast.object, Type.object({
-    [ast.property.name]: otherType
+    [ast.property.name]: type
   }));
 });
-const narrowPathUnary = Trace.instrument("narrowPathUnary", function narrowPathUnary2(env, ast, otherType) {
+const narrowPathUnary = Trace.instrument("narrowPathUnary", function narrowPathUnary2(env, ast, type) {
   switch (ast.operator) {
     case "!":
       return env;
 
     case "typeof":
-      if (Type.isSingleton(otherType)) {
-        switch (otherType.value) {
+      if (Type.isSingleton(type)) {
+        switch (type.value) {
           case "boolean":
             return narrowPath(env, ast.argument, Type.boolean);
 
@@ -103,8 +106,8 @@ const narrowPathUnary = Trace.instrument("narrowPathUnary", function narrowPathU
           default:
             return env;
         }
-      } else if (Type.isNot(otherType) && Type.isSingleton(otherType.base)) {
-        switch (otherType.base.value) {
+      } else if (Type.isNot(type) && Type.isSingleton(type.base)) {
+        switch (type.base.value) {
           case "boolean":
             return narrowPath(env, ast.argument, Type.not(Type.boolean));
 
@@ -126,16 +129,16 @@ const narrowPathUnary = Trace.instrument("narrowPathUnary", function narrowPathU
       bug(`unexpected ${ast.operator}`);
   }
 });
-const narrowPath = Trace.instrument("narrowPath", function narrowPath2(env, ast, otherType) {
+const narrowPath = Trace.instrument("narrowPath", function narrowPath2(env, ast, type) {
   switch (ast.type) {
     case "Identifier":
-      return narrowPathIdentifier(env, ast, otherType);
+      return narrowPathIdentifier(env, ast, type);
 
     case "MemberExpression":
-      return narrowPathMember(env, ast, otherType);
+      return narrowPathMember(env, ast, type);
 
     case "UnaryExpression":
-      return narrowPathUnary(env, ast, otherType);
+      return narrowPathUnary(env, ast, type);
 
     default:
       return env;
@@ -184,8 +187,9 @@ const narrowBinary = Trace.instrument("narrowBinary", function narrowBinary2(env
     env = narrowPath(env, ast.left, right);
     return narrowPath(env, ast.right, left);
   } else if (ast.operator === "!==" && assume || ast.operator === "===" && !assume) {
-    env = narrowPath(env, ast.left, Type.not(right));
-    return narrowPath(env, ast.right, Type.not(left));
+    if (Type.isSingleton(right)) env = narrowPath(env, ast.left, Type.not(right));
+    if (Type.isSingleton(left)) env = narrowPath(env, ast.right, Type.not(left));
+    return env;
   } else return env;
 });
 export const narrow = Trace.instrument("narrow", function narrow2(env, ast, assume) {
@@ -200,12 +204,7 @@ export const narrow = Trace.instrument("narrow", function narrow2(env, ast, assu
       return narrowBinary(env, ast, assume);
 
     default:
-      if (assume) {
-        return narrowPath(env, ast, Type.truthy);
-      } else {
-        return narrowPath(env, ast, Type.falsy);
-      }
-
+      return narrowPath(env, ast, assume ? Type.truthy : Type.falsy);
   }
 });
 export default narrow;
