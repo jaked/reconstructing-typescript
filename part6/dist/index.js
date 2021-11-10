@@ -12,7 +12,7 @@ const examples = {
   conditional: `
 (x: unknown) => x ? 'true' : 'false'
 `,
-  "conditional check intersection": `
+  "conditional check": `
 (x => x ? 'true' : 'false') as
   ((x: 0) => 'false') & ((x: 1) => 'true')
 `,
