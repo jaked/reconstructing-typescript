@@ -43,12 +43,13 @@ function (x: Type, y: Type): Type {
     return Type.intersection(...y.types.map(b => narrowType(x, b)));
 
   if (Type.isNot(y)) {
-    if (Type.isSubtype(x, y.base) && Type.isSubtype(y.base, x)) return Type.never;
-    else if (Type.isBoolean(x) && Type.isSingleton(y.base) && Type.isBoolean(y.base.base)) {
-      if (y.base.value === true) return Type.singleton(false);
-      else return Type.singleton(true);
+    if (Type.isSubtype(x, y.base)) {
+      return Type.never;
+    } else if (Type.isBoolean(x) && Type.isSingleton(y.base) && Type.isBoolean(y.base.base)) {
+      return Type.singleton(!y.base.value);
+    } else {
+      return x;
     }
-    else return x;
   }
 
   if (Type.isSingleton(x) && Type.isSingleton(y))
@@ -74,7 +75,7 @@ function (x: Type, y: Type): Type {
       return Type.object(properties);
   }
 
-  return x.type === y.type ? x : Type.never;
+  return Type.intersection(x, y);
 }
 );
 
@@ -82,12 +83,11 @@ const narrowPathIdentifier = Trace.instrument('narrowPathIdentifier',
 function narrowPathIdentifier(
   env: Env,
   ast: AST.Identifier,
-  otherType: Type
+  type: Type
 ): Env {
-  const identType = env.get(ast.name);
-  if (!identType) bug('expected bound identifer');
-  const type = narrowType(identType, otherType);
-  return env.set(ast.name, type);
+  const ident = env.get(ast.name);
+  if (!ident) bug('expected bound identifer');
+  return env.set(ast.name, narrowType(ident, type));
 }
 );
 
@@ -95,14 +95,14 @@ const narrowPathMember = Trace.instrument('narrowPathMember',
 function narrowPathMember(
   env: Env,
   ast: AST.MemberExpression,
-  otherType: Type
+  type: Type
 ): Env {
   if (ast.computed) bug(`unimplemented computed`);
   if (!AST.isIdentifier(ast.property)) bug(`unexpected ${ast.property.type}`);
   return narrowPath(
     env,
     ast.object,
-    Type.object({ [ast.property.name]: otherType })
+    Type.object({ [ast.property.name]: type })
   );
 }
 );
@@ -111,15 +111,15 @@ const narrowPathUnary = Trace.instrument('narrowPathUnary',
 function narrowPathUnary(
   env: Env,
   ast: AST.UnaryExpression,
-  otherType: Type
+  type: Type
 ): Env {
   switch (ast.operator) {
     case '!':
       return env;
 
     case 'typeof':
-      if (Type.isSingleton(otherType)) {
-        switch (otherType.value) {
+      if (Type.isSingleton(type)) {
+        switch (type.value) {
           case 'boolean':
             return narrowPath(env, ast.argument, Type.boolean);
           case 'number':
@@ -131,8 +131,8 @@ function narrowPathUnary(
           // TODO functions
           default: return env;
         }
-      } else if (Type.isNot(otherType) && Type.isSingleton(otherType.base)) {
-        switch (otherType.base.value) {
+      } else if (Type.isNot(type) && Type.isSingleton(type.base)) {
+        switch (type.base.value) {
           case 'boolean':
             return narrowPath(env, ast.argument, Type.not(Type.boolean));
           case 'number':
@@ -157,17 +157,17 @@ const narrowPath = Trace.instrument('narrowPath',
 function narrowPath(
   env: Env,
   ast: AST.Expression,
-  otherType: Type
+  type: Type
 ): Env {
   switch (ast.type) {
     case 'Identifier':
-      return narrowPathIdentifier(env, ast, otherType);
+      return narrowPathIdentifier(env, ast, type);
 
     case 'MemberExpression':
-      return narrowPathMember(env, ast, otherType);
+      return narrowPathMember(env, ast, type);
 
     case 'UnaryExpression':
-      return narrowPathUnary(env, ast, otherType);
+      return narrowPathUnary(env, ast, type);
 
     default: return env;
   }
@@ -240,12 +240,18 @@ function narrowBinary(
   if (!AST.isExpression(ast.left)) bug(`unimplemented ${ast.left.type}`);
   const left = synth(env, ast.left);
   const right = synth(env, ast.right);
+
   if (ast.operator === '===' && assume || ast.operator === '!==' && !assume) {
     env = narrowPath(env, ast.left, right);
     return narrowPath(env, ast.right, left);
+
   } else if (ast.operator === '!==' && assume || ast.operator === '===' && !assume) {
-    env = narrowPath(env, ast.left, Type.not(right));
-    return narrowPath(env, ast.right, Type.not(left));
+    if (Type.isSingleton(right))
+      env = narrowPath(env, ast.left, Type.not(right));
+    if (Type.isSingleton(left))
+      env = narrowPath(env, ast.right, Type.not(left));
+    return env;
+
   } else return env;
 }
 );
@@ -268,11 +274,7 @@ function narrow(
       return narrowBinary(env, ast, assume);
 
     default:
-      if (assume) {
-        return narrowPath(env, ast, Type.truthy);
-      } else {
-        return narrowPath(env, ast, Type.falsy);
-      }
+      return narrowPath(env, ast, assume ? Type.truthy : Type.falsy);
   }
 }
 );

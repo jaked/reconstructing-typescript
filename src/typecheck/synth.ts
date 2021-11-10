@@ -163,28 +163,26 @@ function synthBinary(env: Env, ast: AST.BinaryExpression): Type {
 const synthLogical = Trace.instrument('synthLogical',
 function synthLogical(env: Env, ast: AST.LogicalExpression): Type {
   const left = synth(env, ast.left);
-  const right = synth(narrow(env, ast.left, ast.operator === '&&'), ast.right);
-  return Type.map(left, right, Trace.instrument('...synthLogical', (left: Type, right: Type) => {
-    switch (ast.operator) {
-      case '&&':
-        if (Type.isFalsy(left))
-          return left;
-        else if (Type.isTruthy(left))
-          return right;
-        else
-          return Type.union(narrowType(left, Type.falsy), right);
+  const right = () => synth(narrow(env, ast.left, ast.operator === '&&'), ast.right);
+  switch (ast.operator) {
+    case '&&':
+      if (Type.isFalsy(left))
+        return left;
+      else if (Type.isTruthy(left))
+        return right();
+      else
+        return Type.union(narrowType(left, Type.falsy), right());
 
-      case '||':
-        if (Type.isTruthy(left))
-          return left;
-        else if (Type.isFalsy(left))
-          return right;
-        else
-          return Type.union(narrowType(left, Type.truthy), right);
+    case '||':
+      if (Type.isTruthy(left))
+        return left;
+      else if (Type.isFalsy(left))
+        return right();
+      else
+        return Type.union(narrowType(left, Type.truthy), right());
 
-      default: bug(`unimplemented ${ast.operator}`);
-    }
-  }, { ...ast, left: underscore, right: underscore }));
+    default: bug(`unimplemented ${ast.operator}`);
+  }
 }
 );
 

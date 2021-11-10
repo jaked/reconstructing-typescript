@@ -271,7 +271,7 @@ describe('logical and', () => {
     const env = Env({ x: Parse.parseType('number | string') });
     expectSynth(
       `typeof(x) === 'number' && x + 1`,
-      `number | false`,
+      `false | number`,
       env
     )
   });
@@ -282,7 +282,7 @@ describe('logical or', () => {
     const env = Env({ x: Type.number, y: Type.string })
     expectSynth(
       'x || y',
-      'number | string',
+      'false | number',
       env
     );
   });
