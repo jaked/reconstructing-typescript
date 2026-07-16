@@ -1,6 +1,0 @@
-{
-  "imports": {
-    "@babel/types": "./@babel/types.js",
-    "prismjs/components/prism-typescript": "./prismjs/components/prism-typescript.js"
-  }
-}
