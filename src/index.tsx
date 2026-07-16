@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import Editor from 'react-simple-code-editor';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-typescript';
+import 'prismjs/themes/prism.css';
 
 import * as Trace from './util/trace';
 import { parseExpression } from './ast/parse';
